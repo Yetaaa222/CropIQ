@@ -225,6 +225,56 @@ create table if not exists public.educational_modules (
   created_at TIMESTAMPTZ default NOW() not null
 );
 
+-- Add presentation fields to educational_modules
+alter table public.educational_modules
+add column if not exists icon text,
+add column if not exists accent_color text,
+add column if not exists background_color text,
+add column if not exists badge text,
+add column if not exists gradient text[];
+
+-- e.g. ['#e0f2fe', '#ffffff']
+-- Backfill the default 4 modules
+update public.educational_modules
+set
+  icon = '🌦️',
+  accent_color = '#0ea5e9',
+  background_color = '#e0f2fe',
+  badge = 'Beginner',
+  gradient = array['#e0f2fe', '#ffffff']
+where
+  id = 1;
+
+update public.educational_modules
+set
+  icon = '🌱',
+  accent_color = '#16a34a',
+  background_color = '#dcfce7',
+  badge = 'Core Skill',
+  gradient = array['#dcfce7', '#ffffff']
+where
+  id = 2;
+
+update public.educational_modules
+set
+  icon = '💧',
+  accent_color = '#0891b2',
+  background_color = '#cffafe',
+  badge = 'Practical',
+  gradient = array['#cffafe', '#ffffff']
+where
+  id = 3;
+
+update public.educational_modules
+set
+  icon = '🪲',
+  accent_color = '#ea580c',
+  background_color = '#ffedd5',
+  badge = 'Intermediate',
+  gradient = array['#ffedd5', '#ffffff']
+where
+  id = 4;
+
 -- Insert default modules (idempotent)
 insert into
   public.educational_modules (id, title, description, duration)
@@ -339,14 +389,12 @@ create policy "Users can delete own progress" on public.learning_progress for DE
 -- ============================================
 -- 6. FUNCTIONS & TRIGGERS
 -- ============================================
-
 create or replace function public.handle_updated_at () RETURNS TRIGGER as $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 
 drop trigger IF exists set_updated_at_user_profiles on public.user_profiles;
 
@@ -444,10 +492,7 @@ END $$;
 
 -- ============================================
 -- End of migration
-
-
 -- CROPS TABLE
-
 create table if not exists public.crops (
   id INTEGER primary key,
   name TEXT not null unique,
@@ -463,8 +508,8 @@ create table if not exists public.crops (
   suitability_label TEXT default 'Good',
   temp_range_min NUMERIC(5, 2),
   temp_range_max NUMERIC(5, 2),
-  rainfall_min INTEGER, 
-  rainfall_max INTEGER, 
+  rainfall_min INTEGER,
+  rainfall_max INTEGER,
   humidity_min INTEGER,
   humidity_max INTEGER,
   soil_type TEXT,
@@ -495,480 +540,9 @@ create policy "Anyone can view crops" on public.crops for
 select
   using (true);
 
--- ============================================
--- INSERT DEFAULT CROPS DATA
--- ============================================
-INSERT INTO public.crops (
-  id,
-  name,
-  full_name,
-  category,
-  description,
-  short_description,
-  image_emoji,
-  suitability_baseline,
-  suitability_label,
-  temp_range_min,
-  temp_range_max,
-  rainfall_min,
-  rainfall_max,
-  humidity_min,
-  humidity_max,
-  soil_type,
-  growing_season_min,
-  growing_season_max,
-  growing_months,
-  water_needs,
-  planting_depth_min,
-  planting_depth_max,
-  spacing_rows,
-  spacing_plants,
-  companion_plants,
-  common_diseases,
-  management_practices
-)
-VALUES
-  (
-    1,
-    'Maize',
-    'Maize',
-    'Cereals',
-    'Staple crop, well-suited to Zambian climate',
-    'Excellent choice for your region. Current rainfall and temperature are ideal.',
-    '🌾',
-    95,
-    'Excellent',
-    18,
-    27,
-    600,
-    1000,
-    60,
-    70,
-    'Well-drained loamy soil',
-    120,
-    150,
-    'November-March',
-    'Moderate to high',
-    5,
-    7.5,
-    '75cm between rows',
-    '25cm between plants',
-    'Beans, squash, cucumbers',
-    ARRAY['Maize Streak Virus','Gray Leaf Spot','Armyworm'],
-    'Plant at the beginning of rainy season, ensure proper spacing'
-  ),
-  (
-    2,
-    'Groundnuts',
-    'Groundnuts (Peanuts)',
-    'Legumes',
-    'Nitrogen-fixing legume, good cash crop',
-    'Great nitrogen-fixing crop. Well-suited to current climate conditions.',
-    '🥜',
-    88,
-    'Excellent',
-    20,
-    30,
-    500,
-    1000,
-    65,
-    75,
-    'Sandy loam, well-drained',
-    90,
-    130,
-    'November-February',
-    'Moderate',
-    5,
-    8,
-    '45cm between rows',
-    '15cm between plants',
-    'Maize, sweet potato, pumpkin',
-    ARRAY['Rosette Disease','Leaf Spot','Aflatoxin'],
-    'Rotate with cereals, harvest when leaves turn yellow'
-  ),
-  (
-    3,
-    'Soybeans',
-    'Soybeans',
-    'Legumes',
-    'High protein content, improves soil fertility',
-    'High protein crop. Improves soil health and fertility naturally.',
-    '🌱',
-    85,
-    'Very Good',
-    20,
-    30,
-    450,
-    700,
-    60,
-    80,
-    'Well-drained loamy soil, pH 6.0-6.8',
-    90,
-    150,
-    'November-March',
-    'Moderate',
-    3,
-    5,
-    '60cm between rows',
-    '10cm between plants',
-    'Maize, sorghum, sunflower',
-    ARRAY['Rust','Bacterial Blight','Pod Borer'],
-    'Inoculate seeds, practice crop rotation'
-  ),
-  
-  (
-    5,
-    'Cassava',
-    'Cassava',
-    'Root Crop',
-    'Drought-tolerant staple root crop',
-    'Excellent for dry regions. Performs well even with low rainfall.',
-    '🥔',
-    90,
-    'Excellent',
-    18,
-    32,
-    400,
-    900,
-    50,
-    70,
-    'Sandy loam, well-drained',
-    240,
-    360,
-    'November-April',
-    'Low',
-    2,      -- planting_depth_min (m or cm depending on your convention; numeric kept small)
-    5,      -- planting_depth_max
-    '100cm between rows',   -- spacing_rows (was previously unquoted/misaligned)
-    '30cm between plants',   -- spacing_plants
-    'Maize, beans',
-    ARRAY['Cassava Mosaic Virus','Bacterial Blight','Root Rot'],
-    'Plant at the start of rainy season; space properly to avoid overcrowding'
-  ),
-  (
-    6,
-    'Millet',
-    'Finger Millet',
-    'Cereal',
-    'Drought-tolerant cereal for human and animal consumption',
-    'Good for semi-arid areas. Tolerates high temperatures.',
-    '🌾',
-    85,
-    'Very Good',
-    20,
-    35,
-    300,
-    700,
-    40,
-    60,
-    'Sandy, well-drained soil',
-    90,
-    120,
-    'November-March',
-    'Low',
-    3,
-    5,
-    '45cm between rows',
-    '10cm between plants',
-    'Legumes',
-    ARRAY['Blast Disease','Leaf Spot'],
-    'Plant early in rainy season; ensure good spacing'
-  ),
-  (
-    7,
-    'Sorghum',
-    'Sorghum',
-    'Cereal',
-    'Versatile cereal, drought-resistant and nutritious',
-    'Ideal for hot regions. Can tolerate low rainfall.',
-    '🌾',
-    88,
-    'Excellent',
-    22,
-    35,
-    400,
-    800,
-    40,
-    60,
-    'Loamy, well-drained',
-    90,
-    150,
-    'November-April',
-    'Low to moderate',
-    4,
-    6,
-    '50cm between rows',
-    '15cm between plants',
-    'Legumes, groundnuts',
-    ARRAY['Sorghum Mosaic Virus','Anthracnose','Grain Mold'],
-    'Plant at onset of rains; rotate with legumes'
-  ),
-  (
-    8,
-    'Rice',
-    'Rice',
-    'Cereal',
-    'Staple grain requiring waterlogged conditions or irrigation',
-    'Suitable for irrigated lowlands; high yields with proper water management.',
-    '🍚',
-    80,
-    'Good',
-    22,
-    32,
-    1200,
-    2000,
-    70,
-    90,
-    'Clay loam, water-retentive',
-    90,
-    150,
-    'December-April',
-    'High',
-    1,
-    2,
-    '25cm between rows',
-    '15cm between plants',
-    'Legumes, vegetables',
-    ARRAY['Rice Blast','Bacterial Leaf Blight','Brown Spot'],
-    'Requires flooded paddies or irrigation; plant in rows'
-  ),
-  (
-    9,
-    'Beans',
-    'Common Beans',
-    'Legumes',
-    'Protein-rich legume, improves soil nitrogen',
-    'Excellent rotation crop with cereals. Performs well in moderate rainfall.',
-    '🌱',
-    92,
-    'Excellent',
-    18,
-    28,
-    500,
-    1000,
-    60,
-    80,
-    'Loamy soil, well-drained',
-    60,
-    100,
-    'November-February',
-    'Moderate',
-    3,
-    5,
-    '40cm between rows',
-    '10cm between plants',
-    'Maize, millet, sorghum',
-    ARRAY['Bean Rust','Angular Leaf Spot','Aphids'],
-    'Plant after rains start; rotate with cereals'
-  ),
-  (
-    10,
-    'Sweet Potato',
-    'Sweet Potato',
-    'Root Crop',
-    'High-yield root crop rich in vitamins',
-    'Great for diverse soils and moderate rainfall areas.',
-    '🍠',
-    85,
-    'Very Good',
-    20,
-    30,
-    500,
-    1000,
-    50,
-    70,
-    'Sandy loam, well-drained',
-    90,
-    120,
-    'November-March',
-    'Moderate',
-    5,
-    10,
-    '90cm between rows',
-    '30cm between plants',
-    'Maize, beans',
-    ARRAY['Sweet Potato Virus','Root Rot','Weevils'],
-    'Plant at start of rains; provide trellis if climbing varieties'
-  ),
-  (
-    11,
-    'Tomatoes',
-    'Tomato',
-    'Vegetable',
-    'Popular vegetable for fresh markets and processing',
-    'High market demand; requires moderate rainfall and warm temperatures.',
-    '🍅',
-    88,
-    'Excellent',
-    20,
-    30,
-    600,
-    1200,
-    60,
-    80,
-    'Loamy, fertile soil',
-    90,
-    120,
-    'December-April',
-    'Moderate',
-    5,
-    10,
-    '50cm between rows',
-    '30cm between plants',
-    'Basil, onions, carrots',
-    ARRAY['Late Blight','Fusarium Wilt','Aphids'],
-    'Plant seedlings after last frost; use staking and irrigation'
-  ),
-  (
-    12,
-    'Cabbage',
-    'Cabbage',
-    'Vegetable',
-    'Leafy vegetable, cool-season crop',
-    'Best for moderate temperatures; sensitive to heat.',
-    '🥬',
-    80,
-    'Good',
-    15,
-    25,
-    500,
-    1000,
-    60,
-    80,
-    'Loamy, fertile soil',
-    90,
-    120,
-    'May-August',
-    'Moderate',
-    3,
-    5,
-    '50cm between rows',
-    '30cm between plants',
-    'Carrots, onions, beets',
-    ARRAY['Cabbage Worm','Downy Mildew','Black Rot'],
-    'Plant in rows; protect from pests'
-  ),
-  (
-    13,
-    'Pumpkin',
-    'Pumpkin',
-    'Vegetable',
-    'Vine vegetable, used for food and livestock feed',
-    'Prefers warm temperatures and moderate rainfall.',
-    '🎃',
-    85,
-    'Very Good',
-    20,
-    32,
-    500,
-    1000,
-    50,
-    70,
-    'Loamy, fertile soil',
-    90,
-    120,
-    'November-March',
-    'Moderate',
-    5,
-    10,
-    '100cm between rows',
-    '50cm between plants',
-    'Maize, beans, cucumbers',
-    ARRAY['Powdery Mildew','Downy Mildew','Squash Bugs'],
-    'Plant after last frost; provide trellis if necessary'
-  ),
-  (
-    14,
-    'Onions',
-    'Onion',
-    'Vegetable',
-    'Bulb vegetable, used widely in cooking',
-    'Suitable for warm climates; moderate rainfall required.',
-    '🧅',
-    82,
-    'Very Good',
-    18,
-    28,
-    500,
-    900,
-    60,
-    80,
-    'Sandy loam, well-drained',
-    90,
-    120,
-    'May-August',
-    'Moderate',
-    1,
-    2,
-    '20cm between rows',
-    '10cm between plants',
-    'Carrots, lettuce, tomatoes',
-    ARRAY['Onion Fly','Downy Mildew','Purple Blotch'],
-    'Plant in rows; ensure good drainage'
-  ),
-  (
-    15,
-    'Peas',
-    'Garden Peas',
-    'Legumes',
-    'Cool-season legume, high protein content',
-    'Plant during cooler months; improves soil nitrogen.',
-    '🌱',
-    78,
-    'Good',
-    15,
-    25,
-    500,
-    900,
-    60,
-    80,
-    'Loamy, fertile soil',
-    60,
-    90,
-    '2-3 months',
-    'Moderate',
-    2,
-    4,
-    '30cm between rows',
-    '10cm between plants',
-    'Carrots, radishes, lettuce',
-    ARRAY['Powdery Mildew','Aphids','Root Rot'],
-    'Plant in rows; support climbing varieties'
-  ),
-  (
-    16,
-    'Sugarcane',
-    'Sugarcane',
-    'Cash Crop',
-    'Tall, perennial crop used for sugar production and bioenergy',
-    'Thrives in warm, wet conditions; high water requirement but very profitable.',
-    '🍬',
-    85,
-    'Very Good',
-    25,
-    35,
-    1500,
-    2500,
-    80,
-    95,
-    'Loamy, fertile, well-drained soil with irrigation',
-    1200,
-    1800,
-    'November-April',
-    'High',
-    10,
-    15,
-    '100cm between rows',
-    '30cm between plants',
-    'Legumes, maize, beans',
-    ARRAY['Ratoon Stunting Disease','Red Rot','Sugarcane Mosaic Virus'],
-    'Requires ample water; plant at the start of rainy season; ensure proper spacing and pest management'
-)
-
-ON CONFLICT (id) DO NOTHING;
 
 -- 1) Add columns if they don't exist
-DO $$
+do $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
@@ -997,16 +571,22 @@ $$;
 -- 2) Backfill image_path by convention, only for rows without an image_path
 --    Assumes you upload files to bucket 'crop-images' with filenames like '1.jpg' or 'maize.jpg'.
 --    This example uses the crop id (numeric) and assumes .jpg extension. Adjust extension if needed.
-UPDATE public.crops
-SET image_path = concat(id::text, '.jpg')
-WHERE image_path IS NULL
-  AND EXISTS (
+update public.crops
+set
+  image_path = concat(id::text, '.jpg')
+where
+  image_path is null
+  and exists (
     -- quick heuristic: only set where a reasonable id exists and no custom image_path present
-    SELECT 1 FROM public.crops c2 WHERE c2.id = public.crops.id
+    select
+      1
+    from
+      public.crops c2
+    where
+      c2.id = public.crops.id
   );
 
-
-DO $$
+do $$
 DECLARE
   supabase_url TEXT := current_setting('app.supabase_url', true); -- attempt to get if set
   bucket_name TEXT := 'crop-images';
@@ -1023,22 +603,112 @@ BEGIN
 END
 $$;
 
-UPDATE public.crops
-SET image_url = 'https://i.pinimg.com/1200x/6d/a9/14/6da91415b6b22b78338ca277bdb90361.jpg'
-WHERE id = 1;
+update public.crops
+set
+  image_url = 'https://i.pinimg.com/1200x/7d/47/9e/7d479e6ce43606ce7605c4c3e5a3f7e3.jpg'
+where
+  id = 1;
 
+update public.crops
+set
+  growing_months = 'November-March'
+where
+  name = 'Maize';
 
-UPDATE public.crops SET growing_months = 'November-March' WHERE name = 'Maize';
-UPDATE public.crops SET growing_months = 'November-February' WHERE name = 'Groundnuts';
-UPDATE public.crops SET growing_months = 'November-March' WHERE name = 'Soybeans';
-UPDATE public.crops SET growing_months = 'October-February' WHERE name = 'Sunflower';
-UPDATE public.crops SET growing_months = 'November-April' WHERE name = 'Cassava';
-UPDATE public.crops SET growing_months = 'November-March' WHERE name = 'Millet';
-UPDATE public.crops SET growing_months = 'November-April' WHERE name = 'Sorghum';
-UPDATE public.crops SET growing_months = 'December-April' WHERE name = 'Rice';
-UPDATE public.crops SET growing_months = 'November-February' WHERE name = 'Beans';
-UPDATE public.crops SET growing_months = 'November-March' WHERE name = 'Sweet Potato';
-UPDATE public.crops SET growing_months = 'December-April' WHERE name = 'Tomatoes';
-UPDATE public.crops SET growing_months = 'May-August' WHERE name = 'Cabbage';
-UPDATE public.crops SET growing_months = 'November-March' WHERE name = 'Pumpkin';
-UPDATE public.crops SET growing_months = 'May-August' WHERE name = 'Onions';
+update public.crops
+set
+  growing_months = 'November-February'
+where
+  name = 'Groundnuts';
+
+update public.crops
+set
+  growing_months = 'November-March'
+where
+  name = 'Soybeans';
+
+update public.crops
+set
+  growing_months = 'October-February'
+where
+  name = 'Sunflower';
+
+update public.crops
+set
+  growing_months = 'November-April'
+where
+  name = 'Cassava';
+
+update public.crops
+set
+  growing_months = 'November-March'
+where
+  name = 'Millet';
+
+update public.crops
+set
+  growing_months = 'November-April'
+where
+  name = 'Sorghum';
+
+update public.crops
+set
+  growing_months = 'December-April'
+where
+  name = 'Rice';
+
+update public.crops
+set
+  growing_months = 'November-February'
+where
+  name = 'Beans';
+
+update public.crops
+set
+  growing_months = 'November-March'
+where
+  name = 'Sweet Potato';
+
+update public.crops
+set
+  growing_months = 'December-April'
+where
+  name = 'Tomatoes';
+
+update public.crops
+set
+  growing_months = 'May-August'
+where
+  name = 'Cabbage';
+
+update public.crops
+set
+  growing_months = 'November-March'
+where
+  name = 'Pumpkin';
+
+update public.crops
+set
+  growing_months = 'May-August'
+where
+  name = 'Onions';
+
+-- 4b. Store paragraphs separately (ordered)
+create table if not exists public.educational_module_paragraphs (
+  id bigserial primary key,
+  module_id integer not null references public.educational_modules (id) on delete cascade,
+  order_index integer not null,
+  type text not null default 'text', -- 'text' or 'image'
+  paragraph text, -- The text content or image caption
+  image_url text -- URL if type is 'image'
+);
+
+create index if not exists idx_emp_module_id on public.educational_module_paragraphs (module_id, order_index);
+
+alter table public.educational_module_paragraphs enable row level security;
+
+drop policy if exists "Modules visible to all authenticated" on public.educational_module_paragraphs;
+
+create policy "Modules visible to all authenticated" on public.educational_module_paragraphs for
+select
+  to authenticated using (true);

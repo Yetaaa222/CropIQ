@@ -16,7 +16,8 @@ import { onAuthStateChange, getCurrentUser, signOut } from './auth.js';
 import {
   getUserProfile, upsertUserProfile, getUserFarms, createFarm,
   saveCropRecommendation, getCropRecommendations, getLearningProgress,
-  completeModule, updateSelectedCrops, getAllCrops,
+  completeModule, updateSelectedCrops, getAllCrops, updateLearningProgress,
+  getEducationalModules, getModuleParagraphs,
 } from './database.js';
 import styles from './Styles.js';
 import { base } from './supabase.js';
@@ -107,6 +108,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
   const [savedRecommendations, setSavedRecommendations] = useState([]);
   const [learningProgress, setLearningProgress] = useState([]);
   const [crops, setCrops] = useState([]);
+  const [educationalModules, setEducationalModules] = useState([]);
   const [currentPage, setCurrentPage] = useState('home');
 
   // Location
@@ -121,6 +123,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [showModuleModal, setShowModuleModal] = useState(false);
 
   // Map
   const [mapRegion, setMapRegion] = useState({
@@ -140,6 +143,11 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
   // Crops
   const [recommendations, setRecommendations] = useState([]);
   const [selectedCrop, setSelectedCrop] = useState(null);
+  
+  // Education
+  const [selectedModule, setSelectedModule] = useState(null);
+  const [selectedModuleContent, setSelectedModuleContent] = useState([]);
+  const [isLoadingModule, setIsLoadingModule] = useState(false);
 
   // Profile editing
   const [editFullName, setEditFullName] = useState('');
@@ -171,13 +179,14 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
 
   const loadUserData = async () => {
     try {
-      const [profile, farms, recs, progress] = await Promise.all([
-        getUserProfile(), getUserFarms(), getCropRecommendations(), getLearningProgress(),
+      const [profile, farms, recs, progress, modules] = await Promise.all([
+        getUserProfile(), getUserFarms(), getCropRecommendations(), getLearningProgress(), getEducationalModules(),
       ]);
       setUserProfile(profile);
       setUserFarms(farms);
       setSavedRecommendations(recs);
       setLearningProgress(progress);
+      setEducationalModules(modules);
       if (farms.length > 0 && !selectedFarm) {
         setSelectedFarm(farms[0]);
         setSelectedLocationData({ name: farms[0].name, province: farms[0].province, lat: parseFloat(farms[0].latitude), lon: parseFloat(farms[0].longitude) });
@@ -602,13 +611,6 @@ const getSuitabilityBackground = (score) => {
     { id: 31, name: 'Chinsali', district: 'Chinsali District', province: 'Muchinga Province', lat: -10.5411, lon: 32.0831 },
   ];
 
-  const educationalModules = [
-    { id: 1, title: 'Understanding Weather Patterns', description: 'Learn how to interpret weather data for better crop planning', duration: '15 min read' },
-    { id: 2, title: 'Soil Preparation & Management', description: 'Essential techniques for healthy soil and better yields', duration: '20 min read' },
-    { id: 3, title: 'Water Conservation Techniques', description: 'Efficient irrigation and water management strategies', duration: '12 min read' },
-    { id: 4, title: 'Integrated Pest Management', description: 'Sustainable approaches to pest and disease control', duration: '18 min read' },
-  ];
-
   const filteredLocations = zambianLocations.filter(loc =>
     loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     loc.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -918,33 +920,156 @@ const getSuitabilityBackground = (score) => {
   };
 
   const EducationPage = () => {
-    const handleModuleStart = async (id) => { try { setLearningProgress(await getLearningProgress()); alert(`Starting: ${educationalModules.find(m => m.id === id)?.title}`); } catch (e) { console.error(e); } };
-    const handleModuleComplete = async (id) => { try { await completeModule(id); setLearningProgress(await getLearningProgress()); alert('Module completed!'); } catch (e) { console.error(e); } };
+    const handleModuleStart = async (module) => {
+      setSelectedModule(module);
+      setSelectedModuleContent([]);
+      setIsLoadingModule(true);
+      setShowModuleModal(true);
+      try {
+        const content = await getModuleParagraphs(module.id);
+        setSelectedModuleContent(content);
+        // Track that they started it
+        await updateLearningProgress(module.id, { progress_percentage: 10 });
+        setLearningProgress(await getLearningProgress());
+      } catch (e) {
+        console.error('Error loading module:', e);
+      } finally {
+        setIsLoadingModule(false);
+      }
+    };
+
+    const handleModuleComplete = async (moduleId) => {
+      try {
+        await completeModule(moduleId);
+        setLearningProgress(await getLearningProgress());
+        setShowModuleModal(false);
+        alert('Module completed! Great job!');
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
     return (
       <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
         <ScrollView style={styles.container}>
           <Text style={styles.pageTitle}>Educational Resources</Text>
           <View style={styles.section}>
-            {educationalModules.map(module => {
+            {educationalModules.length > 0 ? educationalModules.map(module => {
               const progress = learningProgress.find(p => p.module_id === module.id);
               const isCompleted = progress?.completed || false;
               return (
                 <View key={module.id} style={styles.moduleCard}>
-                  <Text style={styles.moduleIcon}>📚</Text>
+                  
+                  <Text style={styles.moduleIcon}>{module.icon || '📚'}</Text>
                   <View style={styles.moduleContent}>
                     <Text style={styles.moduleTitle}>{module.title}</Text>
                     <Text style={styles.moduleDescription}>{module.description}</Text>
+
                     <Text style={styles.moduleDuration}>{module.duration}</Text>
                     {progress && <Text style={{ fontSize: 12, color: '#16a34a', marginTop: 4 }}>Progress: {progress.progress_percentage}% {isCompleted && '✓ Completed'}</Text>}
                   </View>
-                  <TouchableOpacity style={[styles.moduleButton, isCompleted && { backgroundColor: '#16a34a' }]} onPress={() => isCompleted ? handleModuleComplete(module.id) : handleModuleStart(module.id)}>
+                  <TouchableOpacity
+                    style={[styles.moduleButton, isCompleted && { backgroundColor: '#16a34a' }]}
+                    onPress={() => handleModuleStart(module)}
+                  >
                     <Text style={styles.moduleButtonText}>{isCompleted ? 'Review →' : 'Start →'}</Text>
                   </TouchableOpacity>
                 </View>
               );
-            })}
+            }) : (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#16a34a" />
+                <Text style={styles.loadingText}>Loading modules...</Text>
+              </View>
+            )}
           </View>
         </ScrollView>
+
+        {/* Module Content Modal */}
+        <Modal
+          visible={showModuleModal}
+          animationType="slide"
+          onRequestClose={() => setShowModuleModal(false)}
+        >
+          <SafeAreaView style={styles.modalFull}>
+            {/* Floating Back Button */}
+            <TouchableOpacity 
+              style={styles.articleFloatingBack} 
+              onPress={() => setShowModuleModal(false)}
+            >
+              <Text style={{ fontSize: 20, color: '#16a34a', fontWeight: 'bold' }}>✕</Text>
+            </TouchableOpacity>
+
+            <ScrollView style={[styles.container, { backgroundColor: '#fff' }]}>
+              {/* Modern Article Header */}
+              <View style={styles.articleHeader}>
+                {selectedModule?.image_url ? (
+                  <Image source={{ uri: selectedModule.image_url }} style={styles.articleHeaderImage} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.articleHeaderImage, { backgroundColor: '#16a34a', opacity: 1 }]} />
+                )}
+                <View style={styles.articleHeaderOverlay}>
+                  <View style={styles.articleMetaContainer}>
+                    <View style={styles.articleBadge}>
+                      <Text style={styles.articleBadgeText}>{selectedModule?.icon || '📚'} LESSON</Text>
+                    </View>
+                    <Text style={styles.articleDuration}>{selectedModule?.duration || '5 min read'}</Text>
+                  </View>
+                  <Text style={styles.articleTitle}>{selectedModule?.title || 'Learning Module'}</Text>
+                </View>
+              </View>
+
+              <View style={styles.articleBody}>
+                {isLoadingModule ? (
+                  <View style={{ padding: 40, alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#16a34a" />
+                    <Text style={styles.loadingText}>Loading lesson content...</Text>
+                  </View>
+                ) : (
+                  <>
+                    {/* Module Description as Introduction */}
+                    <View style={styles.articleQuoteBox}>
+                      <Text style={styles.articleQuoteText}>{selectedModule?.description}</Text>
+                    </View>
+                    
+                    {selectedModuleContent.length > 0 ? selectedModuleContent.map((item, index) => (
+                      <View key={index} style={{ marginBottom: 24 }}>
+                        {item.type === 'image' ? (
+                          <View>
+                            <Image source={{ uri: item.uri }} style={styles.articleContentImage} resizeMode="cover" />
+                            {item.value && <Text style={styles.articleImageCaption}>{item.value}</Text>}
+                          </View>
+                        ) : (
+                          <Text style={styles.articleParagraph}>{item.value}</Text>
+                        )}
+                      </View>
+                    )) : (
+                      <Text style={{ color: '#6b7280', textAlign: 'center', marginTop: 20 }}>No content available for this module yet.</Text>
+                    )}
+
+                    <View style={styles.articleFooter}>
+                      {learningProgress.find(p => p.module_id === selectedModule?.id)?.completed ? (
+                        <View style={styles.completedBanner}>
+                          <Text style={{ fontSize: 24 }}>✅</Text>
+                          <Text style={styles.completedBannerText}>You've completed this lesson! Great job on learning more about farming.</Text>
+                        </View>
+                      ) : (
+                        selectedModuleContent.length > 0 && (
+                          <TouchableOpacity
+                            style={styles.completeButton}
+                            onPress={() => handleModuleComplete(selectedModule.id)}
+                          >
+                            <Text style={styles.completeButtonText}>Finish Lesson ✓</Text>
+                          </TouchableOpacity>
+                        )
+                      )}
+                    </View>
+                  </>
+                )}
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
       </Animated.View>
     );
   };

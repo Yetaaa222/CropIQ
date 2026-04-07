@@ -766,6 +766,35 @@ export const getModuleById = async (moduleId) => {
   }
 };
 
+/**
+ * Get ordered paragraphs for a module
+ * @param {string|number} moduleId - Module ID
+ * @returns {Promise<Object[]>} Array of paragraph objects { type, paragraph, image_url }
+ */
+export const getModuleParagraphs = async (moduleId) => {
+  try {
+    validateRequired({ moduleId }, ['moduleId']);
+    const { data, error } = await supabase
+      .from('educational_module_paragraphs')
+      .select('type, paragraph, image_url, order_index')
+      .eq('module_id', moduleId)
+      .order('order_index', { ascending: true });
+    if (error) throw error;
+    return (data || []).map(row => ({
+      type: row.type || 'text',
+      value: row.paragraph,
+      uri: row.image_url,
+    }));
+  } catch (error) {
+    if (isMissingTableError(error)) {
+      console.warn('educational_module_paragraphs not found; returning empty content');
+      return [];
+    }
+    console.error('Error getting module paragraphs:', error);
+    return [];
+  }
+};
+
 // ============================================
 // DASHBOARD DATA
 // ============================================
@@ -1006,6 +1035,7 @@ export default {
   // Educational Modules
   getEducationalModules,
   getModuleById,
+  getModuleParagraphs,
   
   // Dashboard
   getDashboardData,
