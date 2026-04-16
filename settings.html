@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CropIQ Admin | Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(229, 231, 235, 0.5); }
+        .sidebar-item { @apply flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 transition-all duration-200 hover:bg-green-50 hover:text-green-700; }
+        .sidebar-item.active { @apply bg-green-600 text-white shadow-lg shadow-green-200; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-gray-900 overflow-hidden">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-100 flex flex-col hidden lg:flex">
+            <div class="p-6">
+                <div class="flex items-center gap-3 text-green-600">
+                    <span class="text-3xl">🌱</span>
+                    <span class="font-bold text-xl tracking-tight">CropIQ Admin</span>
+                </div>
+            </div>
+            <nav class="flex-1 px-4 space-y-2 mt-4">
+                <a href="admin.html" class="sidebar-item">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Dashboard
+                </a>
+                <a href="users.html" class="sidebar-item">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Users
+                </a>
+                <a href="articles.html" class="sidebar-item">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Articles
+                </a>
+                <a href="settings.html" class="sidebar-item active">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <header class="h-16 bg-white border-b border-gray-100 flex items-center px-8 z-10">
+                <h2 class="text-xl font-bold text-gray-800">Admin Settings</h2>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-8 max-w-2xl">
+                <div class="space-y-6">
+                    <div class="glass-card rounded-2xl p-6 bg-white">
+                        <h3 class="font-bold text-gray-800 mb-4">Supabase Configuration</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs text-gray-400 font-bold uppercase tracking-wider">Project URL</label>
+                                <input type="text" readonly value="https://frcbiyxewkumgawpfsgo.supabase.co" class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-mono text-gray-500">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400 font-bold uppercase tracking-wider">Anon Key</label>
+                                <input type="password" readonly value="sb_publishable_Zr2cDjHGalkdXoAdaXbTHw_S_fyxX0r" class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-mono text-gray-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 bg-white">
+                        <h3 class="font-bold text-gray-800 mb-4">Security Policies</h3>
+                        <div class="p-4 bg-amber-50 rounded-xl border border-amber-100 flex gap-3">
+                            <span class="text-xl">🛡️</span>
+                            <div>
+                                <p class="text-amber-800 text-sm font-bold">RLS is Enabled</p>
+                                <p class="text-amber-700 text-xs mt-1">Ensure <code>admin_setup_policies.sql</code> is applied for analytics to function.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 bg-white">
+                        <h3 class="font-bold text-gray-800 mb-4">UI Theme</h3>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Dark Mode</span>
+                            <div class="w-12 h-6 bg-gray-200 rounded-full p-1 cursor-pointer transition-colors">
+                                <div class="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

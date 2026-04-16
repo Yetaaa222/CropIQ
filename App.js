@@ -6,7 +6,7 @@ import {
   SafeAreaView, StatusBar, Modal, TextInput, Image, Animated,
   LayoutAnimation, UIManager, Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import MapView, { Marker } from 'react-native-maps';
 
@@ -148,13 +148,13 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedModuleContent, setSelectedModuleContent] = useState([]);
   const [isLoadingModule, setIsLoadingModule] = useState(false);
-
   // Profile editing
   const [editFullName, setEditFullName] = useState('');
   const [editProvince, setEditProvince] = useState('');
   const [editExperienceYears, setEditExperienceYears] = useState('');
   const [editPrimaryCrops, setEditPrimaryCrops] = useState('');
   const [editFarmSize, setEditFarmSize] = useState('');
+  const [editSoilType, setEditSoilType] = useState('');
   const [editProfilePicture, setEditProfilePicture] = useState(null);
   const [isUploadingProfilePicture, setIsUploadingProfilePicture] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -532,6 +532,7 @@ const getSuitabilityBackground = (score) => {
           rainfall: { annual: Math.round(totalRain), pattern: totalRain > 1000 ? 'High' : totalRain > 700 ? 'Moderate' : 'Low' },
           humidity: Math.max(40, Math.min(90, avgHumidity)),
           growingDays: Math.min(240, Math.round(precip.filter(p => p > 1).length * 1.5)),
+          soilType: userProfile?.soil_type || null,
         };
 
         setMonthlyWeatherData(calculateMonthlyWeather(data, data.daily.time));
@@ -573,7 +574,7 @@ const getSuitabilityBackground = (score) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }; 
 
   // ── Static data ───────────────────────────────────────────────
 
@@ -609,6 +610,7 @@ const getSuitabilityBackground = (score) => {
     { id: 29, name: 'Kawambwa', district: 'Kawambwa District', province: 'Luapula Province', lat: -9.7914, lon: 29.0789 },
     { id: 30, name: 'Mpika', district: 'Mpika District', province: 'Muchinga Province', lat: -11.8350, lon: 31.4528 },
     { id: 31, name: 'Chinsali', district: 'Chinsali District', province: 'Muchinga Province', lat: -10.5411, lon: 32.0831 },
+    { id: 32, name: 'THE HOUSE FOR LENGWE', district: 'Lusaka District', province: 'Lusaka Province', lat: -15.4167, lon: 28.2833 },
   ];
 
   const filteredLocations = zambianLocations.filter(loc =>
@@ -625,6 +627,7 @@ const getSuitabilityBackground = (score) => {
     setEditExperienceYears(userProfile?.experience_years ? String(userProfile.experience_years) : '');
     setEditPrimaryCrops(userProfile?.primary_crops?.join(', ') || '');
     setEditFarmSize(userProfile?.farm_size || '');
+    setEditSoilType(userProfile?.soil_type || '');
     setEditProfilePicture(userProfile?.profile_picture_url || null);
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setShowEditProfileModal(true);
@@ -647,7 +650,9 @@ const getSuitabilityBackground = (score) => {
         full_name: editFullName || undefined, province: editProvince || undefined,
         experience_years: editExperienceYears ? parseInt(editExperienceYears, 10) : undefined,
         primary_crops: editPrimaryCrops ? editPrimaryCrops.split(',').map(s => s.trim()).filter(Boolean) : undefined,
-        farm_size: editFarmSize || undefined, profile_picture_url: pictureUrl || undefined,
+        farm_size: editFarmSize || undefined, 
+        soil_type: editSoilType || undefined,
+        profile_picture_url: pictureUrl || undefined,
       }, user);
       setUserProfile(await getUserProfile());
       setShowEditProfileModal(false);
@@ -1076,31 +1081,134 @@ const getSuitabilityBackground = (score) => {
 
   const ProfilePage = () => (
     <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <ScrollView style={styles.container}>
-        <Text style={styles.pageTitle}>User Profile</Text>
-        <View style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <View style={styles.profileAvatar}>
-              {userProfile?.profile_picture_url ? <Image source={{ uri: userProfile.profile_picture_url }} style={styles.profileAvatarImage} /> : <Text style={styles.profileAvatarText}>👤</Text>}
+      <View style={styles.profileContainer}>
+        {/* Header */}
+        <View style={styles.profileMainHeader}>
+          <View style={styles.profileHeaderContent}>
+            <View style={styles.profileHeaderIconCircle}>
+              {userProfile?.profile_picture_url ? (
+                <Image source={{ uri: userProfile.profile_picture_url }} style={{ width: 60, height: 60, borderRadius: 30 }} />
+              ) : (
+                <Ionicons name="person" size={32} color="#FFFFFF" />
+              )}
             </View>
             <View>
-              <Text style={styles.profileName}>{userProfile?.full_name || user?.user_metadata?.full_name || 'Farmer Profile'}</Text>
-              <Text style={styles.profileSubtitle}>{user?.email || 'Zambian Smallholder Farmer'}</Text>
+              <Text style={styles.profileHeaderTitle}>My Profile</Text>
+              <Text style={styles.profileHeaderSubtitle}>Manage your farm information</Text>
             </View>
           </View>
-          <View style={styles.profileSection}>
-            <ProfileField label="Province" value={userProfile?.province || selectedLocationData?.province || 'Not set'} />
-            <ProfileField label="Experience" value={userProfile?.experience_years ? `${userProfile.experience_years}+ years` : 'Not set'} />
-            <ProfileField label="Primary Crops" value={userProfile?.primary_crops?.join(', ') || 'Not set'} />
-            <ProfileField label="Selected Crops" value={userProfile?.selected_crops?.join(', ') || 'None selected'} />
-            <ProfileField label="Farm Size" value={userProfile?.farm_size || 'Not set'} />
-            <ProfileField label="Total Farms" value={userFarms.length.toString()} />
-            <ProfileField label="Completed Modules" value={learningProgress.filter(p => p.completed).length.toString()} />
-          </View>
-          <TouchableOpacity style={styles.editButton} onPress={openEditProfile}><Text style={styles.editButtonText}>Edit Profile</Text></TouchableOpacity>
-          <TouchableOpacity style={[styles.editButton, { backgroundColor: '#dc2626', marginTop: 12 }]} onPress={onLogout}><Text style={[styles.editButtonText, { color: '#ffffff' }]}>Sign Out</Text></TouchableOpacity>
         </View>
-      </ScrollView>
+
+        <ScrollView style={styles.profileContentScroll} showsVerticalScrollIndicator={false}>
+          {/* Current Location Card */}
+          <View style={styles.profileSectionCard}>
+            <View style={styles.profileSectionHeader}>
+              <Text style={styles.profileSectionTitle}>Current Location</Text>
+            </View>
+            <View style={styles.profileLocationCard}>
+              <View style={styles.profileLocationIconCircle}>
+                <Ionicons name="location" size={24} color="#16a34a" />
+              </View>
+              <View>
+                <Text style={styles.profileLocationLabel}>{selectedLocation || 'Not Selected'}</Text>
+                {selectedLocationData && (
+                  <Text style={styles.profileLocationValue}>{selectedLocationData.province}, Zambia</Text>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Saved Locations Card */}
+          {userFarms.length > 0 && (
+            <View style={styles.profileSectionCard}>
+              <View style={styles.profileSectionHeader}>
+                <Text style={styles.profileSectionTitle}>Saved Locations</Text>
+              </View>
+              {userFarms.map((farm, index) => (
+                <View key={farm.id} style={[styles.savedLocationItem, index < userFarms.length - 1 && { marginBottom: 12 }]}>
+                  <Ionicons name="location-outline" size={20} color="#999999" />
+                  <View>
+                    <Text style={styles.profileLocationLabel}>{farm.name}</Text>
+                    <Text style={styles.profileLocationValue}>{farm.province}, Zambia</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Farm Details Card */}
+          <View style={styles.profileSectionCard}>
+            <View style={styles.profileSectionHeader}>
+              <Text style={styles.profileSectionTitle}>Farm Details</Text>
+              <TouchableOpacity style={styles.profileSectionEditButton} onPress={openEditProfile}>
+                <Text style={styles.profileSectionEditButtonText}>Edit</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Farm Size */}
+            <View style={styles.profileDetailItem}>
+              <View style={[styles.profileDetailIconCircle, { backgroundColor: '#DCFCE7' }]}>
+                <MaterialCommunityIcons name="leaf" size={20} color="#16a34a" />
+              </View>
+              <View>
+                <Text style={styles.profileDetailLabel}>Farm Size</Text>
+                <Text style={styles.profileDetailValue}>{userProfile?.farm_size || 'Not specified'}</Text>
+              </View>
+            </View>
+
+            {/* Soil Type */}
+            <View style={styles.profileDetailItem}>
+              <View style={[styles.profileDetailIconCircle, { backgroundColor: '#FEF3C7' }]}>
+                <MaterialCommunityIcons name="test-tube" size={20} color="#D97706" />
+              </View>
+              <View>
+                <Text style={styles.profileDetailLabel}>Soil Type</Text>
+                <Text style={styles.profileDetailValue}>{userProfile?.soil_type || 'Not specified'}</Text>
+              </View>
+            </View>
+
+            {/* Current Crops */}
+            <View style={[styles.profileDetailItem, styles.profileDetailItemLast]}>
+              <View style={[styles.profileDetailIconCircle, { backgroundColor: '#DBEAFE' }]}>
+                <Ionicons name="leaf-outline" size={20} color="#2563EB" />
+              </View>
+              <View>
+                <Text style={styles.profileDetailLabel}>Current Crops</Text>
+                <Text style={styles.profileDetailValue}>
+                  {userProfile?.primary_crops?.join(', ') || 'Not specified'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Activity Card */}
+          <View style={styles.profileSectionCard}>
+            <View style={styles.profileSectionHeader}>
+              <Text style={styles.profileSectionTitle}>Activity</Text>
+            </View>
+            <View style={styles.profileStatsRow}>
+              <View style={styles.profileStatCard}>
+                <Text style={styles.profileStatNumber}>{userFarms.length}</Text>
+                <Text style={styles.profileStatLabel}>Saved Locations</Text>
+              </View>
+              <View style={styles.profileStatCard}>
+                <Text style={styles.profileStatNumber}>
+                  {learningProgress.filter(p => p.completed).length}
+                </Text>
+                <Text style={styles.profileStatLabel}>Modules Completed</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Sign Out Button */}
+          <TouchableOpacity 
+            style={[styles.editButton, { backgroundColor: '#dc2626', borderColor: '#dc2626', marginBottom: 40 }]} 
+            onPress={onLogout}
+          >
+            <Text style={[styles.editButtonText, { color: '#ffffff' }]}>Sign Out</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
     </Animated.View>
   );
 
@@ -1331,6 +1439,7 @@ const getSuitabilityBackground = (score) => {
               { label: 'Experience (years)', value: editExperienceYears, setter: setEditExperienceYears, placeholder: 'e.g. 5', numeric: true },
               { label: 'Primary crops (comma separated)', value: editPrimaryCrops, setter: setEditPrimaryCrops, placeholder: 'Maize, Groundnuts' },
               { label: 'Farm size', value: editFarmSize, setter: setEditFarmSize, placeholder: 'e.g. 2 hectares' },
+              { label: 'Soil Type', value: editSoilType, setter: setEditSoilType, placeholder: 'e.g. Clay, Sandy, Loam' },
             ].map(field => (
               <View key={field.label} style={{ marginBottom: 12 }}>
                 <Text style={{ fontSize: 14, color: '#6b7280', marginBottom: 6 }}>{field.label}</Text>

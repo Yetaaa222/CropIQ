@@ -1356,6 +1356,165 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
 
+  // ── Profile Redesign (DEMO) ───────────────────────────────────
+  profileContainer: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  profileMainHeader: {
+    backgroundColor: '#16a34a',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  profileHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  profileHeaderIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  profileHeaderTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  profileHeaderSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  profileContentScroll: {
+    flex: 1,
+    marginTop: -20,
+    paddingHorizontal: 16,
+  },
+  profileSectionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  profileSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  profileSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  profileSectionEditButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+  },
+  profileSectionEditButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666666',
+  },
+  profileLocationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  profileLocationIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileLocationLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 2,
+  },
+  profileLocationValue: {
+    fontSize: 12,
+    color: '#666666',
+  },
+  profileLocationSubvalue: {
+    fontSize: 12,
+    color: '#999999',
+    marginTop: 2,
+  },
+  profileDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  profileDetailItemLast: {
+    marginBottom: 0,
+  },
+  profileDetailIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileDetailLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 2,
+  },
+  profileDetailValue: {
+    fontSize: 12,
+    color: '#666666',
+  },
+  profileStatsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  profileStatCard: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileStatNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#16a34a',
+    marginBottom: 4,
+  },
+  profileStatLabel: {
+    fontSize: 11,
+    color: '#666666',
+    textAlign: 'center',
+  },
+  savedLocationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+  },
 });
 
 export default styles;
