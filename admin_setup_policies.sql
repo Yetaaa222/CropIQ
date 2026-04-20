@@ -34,6 +34,13 @@ FOR SELECT
 USING (true);
 
 -- 5. CRUD for Educational Modules (Articles)
+CREATE POLICY "Admins can view modules" ON public.educational_modules FOR SELECT USING (true);
 CREATE POLICY "Admins can insert modules" ON public.educational_modules FOR INSERT WITH CHECK (true);
 CREATE POLICY "Admins can update modules" ON public.educational_modules FOR UPDATE USING (true);
 CREATE POLICY "Admins can delete modules" ON public.educational_modules FOR DELETE USING (true);
+
+-- 6. CRUD for Educational Module Paragraphs (Article Content)
+CREATE POLICY "Admins can view paragraphs" ON public.educational_module_paragraphs FOR SELECT USING (true);
+CREATE POLICY "Admins can insert paragraphs" ON public.educational_module_paragraphs FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admins can update paragraphs" ON public.educational_module_paragraphs FOR UPDATE USING (true);
+CREATE POLICY "Admins can delete paragraphs" ON public.educational_module_paragraphs FOR DELETE USING (true);

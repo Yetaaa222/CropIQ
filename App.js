@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ActivityIndicator, View, Text, ScrollView, TouchableOpacity,
   SafeAreaView, StatusBar, Modal, TextInput, Image, Animated,
-  LayoutAnimation, UIManager, Platform,
+  LayoutAnimation, UIManager, Platform, Alert,
 } from 'react-native';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -14,10 +14,10 @@ import LoginPage from './login.js';
 import SignupPage from './signup.js';
 import { onAuthStateChange, getCurrentUser, signOut } from './auth.js';
 import {
-  getUserProfile, upsertUserProfile, getUserFarms, createFarm,
+  getUserProfile, upsertUserProfile, getUserFarms, createFarm, deleteFarm,
   saveCropRecommendation, getCropRecommendations, getLearningProgress,
   completeModule, updateSelectedCrops, getAllCrops, updateLearningProgress,
-  getEducationalModules, getModuleParagraphs,
+  getEducationalModules, getModuleParagraphs, uploadProfilePictureToStorage,
 } from './database.js';
 import styles from './Styles.js';
 import { base } from './supabase.js';
@@ -149,6 +149,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
   const [selectedModuleContent, setSelectedModuleContent] = useState([]);
   const [isLoadingModule, setIsLoadingModule] = useState(false);
   // Profile editing
+  const [isEditing, setIsEditing] = useState(false);
   const [editFullName, setEditFullName] = useState('');
   const [editProvince, setEditProvince] = useState('');
   const [editExperienceYears, setEditExperienceYears] = useState('');
@@ -645,23 +646,63 @@ const getSuitabilityBackground = (score) => {
     setIsSavingProfile(true);
     try {
       let pictureUrl = userProfile?.profile_picture_url || null;
-      if (editProfilePicture?.startsWith('http')) pictureUrl = editProfilePicture;
+      
+      // If user selected a new local image, upload it first
+      if (editProfilePicture && (editProfilePicture.startsWith('file://') || editProfilePicture.startsWith('content://'))) {
+        pictureUrl = await uploadProfilePictureToStorage(editProfilePicture, user);
+      } else if (editProfilePicture?.startsWith('http')) {
+        pictureUrl = editProfilePicture;
+      }
+
       await upsertUserProfile({
-        full_name: editFullName || undefined, province: editProvince || undefined,
+        full_name: editFullName || undefined, 
+        province: editProvince || undefined,
         experience_years: editExperienceYears ? parseInt(editExperienceYears, 10) : undefined,
         primary_crops: editPrimaryCrops ? editPrimaryCrops.split(',').map(s => s.trim()).filter(Boolean) : undefined,
         farm_size: editFarmSize || undefined, 
         soil_type: editSoilType || undefined,
         profile_picture_url: pictureUrl || undefined,
       }, user);
-      setUserProfile(await getUserProfile());
+
+      const updatedProfile = await getUserProfile();
+      setUserProfile(updatedProfile);
       setShowEditProfileModal(false);
-      alert('Profile saved');
+      alert('Profile saved successfully!');
     } catch (e) {
+      console.error('Error saving profile:', e);
       alert('Failed to save profile. Please try again.');
     } finally {
       setIsSavingProfile(false);
     }
+  };
+
+  const handleDeleteFarm = async (farmId) => {
+    Alert.alert(
+      'Delete Location',
+      'Are you sure you want to delete this saved location?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteFarm(farmId);
+              setUserFarms(prev => prev.filter(f => f.id !== farmId));
+              if (selectedFarm?.id === farmId) {
+                setSelectedFarm(null);
+                setSelectedLocation('');
+                setSelectedLocationData(null);
+                setWeatherData(null);
+                setRecommendations([]);
+              }
+            } catch (e) {
+              alert('Failed to delete location');
+            }
+          }
+        }
+      ]
+    );
   };
 
   // ── Shared components ─────────────────────────────────────────
@@ -1125,12 +1166,17 @@ const getSuitabilityBackground = (score) => {
                 <Text style={styles.profileSectionTitle}>Saved Locations</Text>
               </View>
               {userFarms.map((farm, index) => (
-                <View key={farm.id} style={[styles.savedLocationItem, index < userFarms.length - 1 && { marginBottom: 12 }]}>
-                  <Ionicons name="location-outline" size={20} color="#999999" />
-                  <View>
-                    <Text style={styles.profileLocationLabel}>{farm.name}</Text>
-                    <Text style={styles.profileLocationValue}>{farm.province}, Zambia</Text>
+                <View key={farm.id} style={[styles.savedLocationItem, index < userFarms.length - 1 && { marginBottom: 12 }, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    <Ionicons name="location-outline" size={20} color="#999999" />
+                    <View style={{ marginLeft: 12 }}>
+                      <Text style={styles.profileLocationLabel}>{farm.name}</Text>
+                      <Text style={styles.profileLocationValue}>{farm.province}, Zambia</Text>
+                    </View>
                   </View>
+                  <TouchableOpacity onPress={() => handleDeleteFarm(farm.id)} style={{ padding: 8 }}>
+                    <Ionicons name="trash-outline" size={20} color="#dc2626" />
+                  </TouchableOpacity>
                 </View>
               ))}
             </View>

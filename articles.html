@@ -9,40 +9,133 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(229, 231, 235, 0.5); transition: all 0.2s; }
-        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05); }
-        .sidebar-item { @apply flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 transition-all duration-200 hover:bg-green-50 hover:text-green-700; }
-        .sidebar-item.active { @apply bg-green-600 text-white shadow-lg shadow-green-200; }
+        
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Redesigned Sidebar - Standard CSS for CDN Compatibility */
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            color: #94a3b8; /* text-gray-400 */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            text-decoration: none;
+        }
+        .sidebar-item:hover {
+            background-color: rgba(240, 253, 244, 0.8); /* bg-green-50/80 */
+            color: #15803d; /* text-green-700 */
+            transform: translateX(4px);
+        }
+        .sidebar-item.active {
+            background-color: #16a34a; /* bg-green-600 */
+            color: #ffffff;
+            box-shadow: 0 10px 20px -3px rgba(22, 163, 74, 0.4);
+            transform: translateX(8px);
+        }
+        .sidebar-item svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-item.active svg {
+            color: #ffffff;
+        }
+        .sidebar-item:hover svg {
+            transform: scale(1.1);
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-nav { animation: slideInRight 0.5s ease-out forwards; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-gray-900 overflow-hidden">
     <div class="flex h-screen">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-100 flex flex-col hidden lg:flex">
-            <div class="p-6">
-                <div class="flex items-center gap-3 text-green-600">
-                    <span class="text-3xl">🌱</span>
-                    <span class="font-bold text-xl tracking-tight">CropIQ Admin</span>
+        <aside class="w-72 bg-white border-r border-gray-100 flex flex-col hidden lg:flex z-20">
+            <div class="p-8">
+                <div class="flex items-center gap-3 text-green-600 group cursor-pointer">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-green-100 transform transition-transform group-hover:rotate-12">🌱</div>
+                    <div>
+                        <span class="font-extrabold text-xl tracking-tight block text-gray-800">CropIQ</span>
+                        <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-green-600/60">Intelligence</span>
+                    </div>
                 </div>
             </div>
-            <nav class="flex-1 px-4 space-y-2 mt-4">
-                <a href="admin.html" class="sidebar-item">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                    Dashboard
-                </a>
-                <a href="users.html" class="sidebar-item">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    Users
-                </a>
-                <a href="articles.html" class="sidebar-item active">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Articles
-                </a>
-                <a href="settings.html" class="sidebar-item">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    Settings
-                </a>
-            </nav>
+            
+            <div class="flex-1 px-6 flex flex-col gap-10 overflow-y-auto text-sm">
+                <!-- Group 1 -->
+                <div class="animate-nav" style="animation-delay: 0.1s">
+                    <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Core Insights</p>
+                    <nav class="space-y-1.5">
+                        <a href="admin.html" class="sidebar-item group">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                            <span class="font-medium">Dashboard</span>
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Group 2 -->
+                <div class="animate-nav" style="animation-delay: 0.2s">
+                    <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Operations</p>
+                    <nav class="space-y-1.5">
+                        <a href="users.html" class="sidebar-item group">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            <span class="font-medium">Farmers</span>
+                        </a>
+                        <a href="articles.html" class="sidebar-item active group">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span class="font-bold">Knowledge</span>
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Group 3 -->
+                <div class="animate-nav" style="animation-delay: 0.3s">
+                    <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Platform</p>
+                    <nav class="space-y-1.5">
+                        <a href="settings.html" class="sidebar-item group">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span class="font-medium">Settings</span>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Footer Profile -->
+            <div class="p-6 bg-gray-50/50 mt-auto animate-nav" style="animation-delay: 0.4s">
+                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm group cursor-pointer hover:shadow-md transition-all">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-600 rounded-2xl flex items-center justify-center font-bold text-white transition-transform group-hover:scale-110 group-hover:rotate-6">AD</div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-extrabold text-gray-800 truncate">Super Admin</p>
+                            <p class="text-[10px] text-gray-400 truncate">online</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="w-full mt-4 py-2 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest hover:text-red-500 transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -63,41 +156,62 @@
     <!-- Article Editor Modal -->
     <div id="modal-backdrop" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-opacity duration-300"></div>
     <div id="article-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-6 bg-green-600 text-white flex justify-between items-center">
                 <h3 id="modal-title" class="font-bold text-xl text-white">Create New Article</h3>
                 <button onclick="closeArticleModal()" class="p-2 hover:bg-black/10 rounded-xl">✕</button>
             </div>
-            <div class="p-6 overflow-y-auto flex-1 space-y-4">
-                <form id="article-form" class="space-y-4">
+            
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Metadata Form -->
+                <form id="article-form" class="space-y-4 pb-6 border-b border-gray-100">
+                    <p class="text-[10px] font-extrabold uppercase text-green-600 tracking-[0.2em]">Basic Information</p>
                     <input type="hidden" id="article-id">
-                    <div>
-                        <label class="text-xs text-gray-400 font-bold uppercase">Unique ID (Numeric)</label>
-                        <input type="number" id="f-id" required class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20">
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-[10px] text-gray-400 font-bold uppercase">ID</label>
+                            <input type="number" id="f-id" required class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="text-[10px] text-gray-400 font-bold uppercase">Title</label>
+                            <input type="text" id="f-title" required class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20">
+                        </div>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-400 font-bold uppercase">Title</label>
-                        <input type="text" id="f-title" required class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-400 font-bold uppercase">Description</label>
-                        <textarea id="f-description" rows="3" class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20"></textarea>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase">Description</label>
+                        <textarea id="f-description" rows="2" class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20"></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="text-xs text-gray-400 font-bold uppercase">Duration (e.g. 15 min read)</label>
+                            <label class="text-[10px] text-gray-400 font-bold uppercase">Duration</label>
                             <input type="text" id="f-duration" class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20">
                         </div>
                         <div>
-                            <label class="text-xs text-gray-400 font-bold uppercase">Icon (Emoji)</label>
+                            <label class="text-[10px] text-gray-400 font-bold uppercase">Icon</label>
                             <input type="text" id="f-icon" class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20">
                         </div>
                     </div>
                 </form>
+
+                <!-- Content Blocks Editor -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[10px] font-extrabold uppercase text-green-600 tracking-[0.2em]">Article Content</p>
+                        <div class="flex gap-2">
+                            <button onclick="addContentBlock('text')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold border border-blue-100 hover:bg-blue-600 hover:text-white transition-all">+ Add Text</button>
+                            <button onclick="addContentBlock('image')" class="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold border border-purple-100 hover:bg-purple-600 hover:text-white transition-all">+ Add Image</button>
+                        </div>
+                    </div>
+                    
+                    <div id="content-blocks" class="space-y-3 min-h-[100px] bg-gray-50/50 p-4 rounded-3xl border-2 border-dashed border-gray-100">
+                        <!-- Blocks injected here -->
+                    </div>
+                </div>
             </div>
-            <div class="p-6 border-t border-gray-100 flex gap-3">
-                <button onclick="closeArticleModal()" class="flex-1 py-3 bg-gray-50 text-gray-500 font-bold rounded-xl text-sm">Cancel</button>
-                <button onclick="saveArticle()" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-green-100">Save Article</button>
+
+            <div class="p-6 border-t border-gray-100 bg-gray-50/30 flex gap-3">
+                <button onclick="closeArticleModal()" class="flex-1 py-3 bg-white border border-gray-200 text-gray-500 font-bold rounded-2xl text-sm transition-all hover:bg-gray-50">Cancel</button>
+                <button onclick="saveArticle()" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-2xl text-sm shadow-xl shadow-green-200 transition-all hover:bg-green-700 active:scale-95">Save Everything</button>
             </div>
         </div>
     </div>
@@ -105,73 +219,188 @@
     <script>
         const SUPABASE_URL = 'https://frcbiyxewkumgawpfsgo.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_Zr2cDjHGalkdXoAdaXbTHw_S_fyxX0r';
-        const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let supabaseClient;
+        try {
+            if (typeof supabase === 'undefined') throw new Error('Supabase not loaded');
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) { alert('Connection Error: ' + e.message); }
 
         let modules = [];
         let progress = [];
+        let currentBlocks = []; // To track paragraphs locally in the modal
 
         async function loadArticles() {
-            const { data: mData } = await supabaseClient.from('educational_modules').select('*').order('id', { ascending: true });
-            const { data: pData } = await supabaseClient.from('learning_progress').select('*');
-            modules = mData || [];
-            progress = pData || [];
-            renderArticles();
+            if (!supabaseClient) return;
+            try {
+                const { data: mData } = await supabaseClient.from('educational_modules').select('*').order('id', { ascending: true });
+                const { data: pData } = await supabaseClient.from('learning_progress').select('*');
+                modules = mData || [];
+                progress = pData || [];
+                renderArticles();
+            } catch (err) { console.error(err); }
         }
 
         function renderArticles() {
             const grid = document.getElementById('articles-grid');
+            if (modules.length === 0) {
+                grid.innerHTML = `<div class="col-span-full p-12 text-center glass-card rounded-3xl"><p class="text-gray-400">No articles found.</p></div>`;
+                return;
+            }
             grid.innerHTML = modules.map(m => {
                 const completions = progress.filter(p => p.module_id === m.id && p.completed).length;
                 return `
-                    <div class="glass-card rounded-2xl p-6 bg-white flex flex-col relative group">
-                        <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onclick="openArticleModal(${m.id})" class="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors">
+                    <div class="glass-card rounded-3xl p-6 bg-white flex flex-col relative group overflow-hidden">
+                        <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+                            <button onclick="openArticleModal(${m.id})" class="p-2 bg-white shadow-xl text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all border border-blue-50">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
-                            <button onclick="deleteArticle(${m.id})" class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors">
+                            <button onclick="deleteArticle(${m.id})" class="p-2 bg-white shadow-xl text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all border border-red-50">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
                         </div>
-                        <div class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl mb-4 group-hover:bg-green-50 group-hover:scale-110 transition-all">${m.icon || '📄'}</div>
-                        <h3 class="font-bold text-gray-800 mb-2">${m.title}</h3>
-                        <p class="text-xs text-gray-400 font-bold mb-2 uppercase">${m.duration || 'Short read'}</p>
-                        <p class="text-xs text-gray-500 flex-1 mb-6">${m.description || 'No description provided.'}</p>
-                        <div class="pt-4 border-t border-gray-50 flex items-center justify-between">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total Reach</span>
-                            <span class="text-sm font-bold text-green-600">${completions} completions</span>
+                        <div class="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-2xl mb-4 group-hover:bg-green-50 group-hover:scale-110 transition-all">${m.icon || '📄'}</div>
+                        <h3 class="font-extrabold text-gray-800 mb-1">${m.title}</h3>
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">${m.duration || 'Short read'}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 flex-1 leading-relaxed line-clamp-3">${m.description || '...'}</p>
+                        <div class="pt-4 mt-4 border-t border-gray-50 flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Activity</span>
+                            <span class="text-xs font-extrabold text-green-600">${completions} users read</span>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        function openArticleModal(id = null) {
+        async function openArticleModal(id = null) {
             const modal = document.getElementById('article-modal');
             const backdrop = document.getElementById('modal-backdrop');
-            const form = document.getElementById('article-form');
-            const title = document.getElementById('modal-title');
-            
-            form.reset();
+            document.getElementById('article-form').reset();
             document.getElementById('article-id').value = '';
             document.getElementById('f-id').disabled = false;
+            document.getElementById('content-blocks').innerHTML = '';
+            currentBlocks = [];
 
             if (id) {
                 const article = modules.find(m => m.id === id);
                 document.getElementById('article-id').value = article.id;
                 document.getElementById('f-id').value = article.id;
-                document.getElementById('f-id').disabled = true; // Don't allow changing ID on edit
+                document.getElementById('f-id').disabled = true;
                 document.getElementById('f-title').value = article.title;
                 document.getElementById('f-description').value = article.description;
                 document.getElementById('f-duration').value = article.duration;
                 document.getElementById('f-icon').value = article.icon;
-                title.innerText = 'Edit Article';
+                document.getElementById('modal-title').innerText = 'Edit Content';
+
+                // Fetch paragraphs
+                const { data: paragraphs } = await supabaseClient
+                    .from('educational_module_paragraphs')
+                    .select('*')
+                    .eq('module_id', id)
+                    .order('order_index', { ascending: true });
+                
+                (paragraphs || []).forEach(p => addContentBlock(p.type, p.paragraph || p.image_url));
             } else {
-                title.innerText = 'Create New Article';
+                document.getElementById('modal-title').innerText = 'New Knowledge Module';
+                // Suggest next ID
+                const nextId = modules.length > 0 ? Math.max(...modules.map(m => m.id)) + 1 : 1;
+                document.getElementById('f-id').value = nextId;
             }
 
             modal.classList.remove('hidden');
             backdrop.classList.remove('hidden');
+        }
+
+        function addContentBlock(type, value = '') {
+            const container = document.getElementById('content-blocks');
+            const blockId = Date.now() + Math.random();
+            const div = document.createElement('div');
+            div.id = `block-${blockId}`;
+            div.className = "p-4 bg-white rounded-2xl border border-gray-100 shadow-sm relative group/block";
+            
+            const contentHtml = type === 'text' 
+                ? `<textarea class="w-full bg-transparent text-sm outline-none placeholder-gray-300 resize-none" placeholder="Enter paragraph text..." oninput="updateBlock('${blockId}', this.value)">${value}</textarea>`
+                : `<div class="flex gap-3 items-center">
+                    <span class="text-xl">🖼️</span>
+                    <input type="text" value="${value}" placeholder="Paste Image URL..." class="w-full bg-transparent text-sm outline-none placeholder-gray-300" oninput="updateBlock('${blockId}', this.value)">
+                   </div>`;
+
+            div.innerHTML = `
+                <div class="absolute -left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/block:opacity-100 transition-opacity">
+                    <div class="w-1 h-8 bg-gray-200 rounded-full"></div>
+                </div>
+                <button onclick="removeBlock('${blockId}')" class="absolute -right-2 -top-2 w-6 h-6 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover/block:opacity-100 transition-all shadow-sm border border-red-100 hover:bg-red-500 hover:text-white">✕</button>
+                <p class="text-[8px] font-bold text-gray-300 uppercase mb-2 tracking-widest">${type}</p>
+                ${contentHtml}
+            `;
+            
+            container.appendChild(div);
+            currentBlocks.push({ id: blockId, type, content: value });
+        }
+
+        function updateBlock(id, val) {
+            const block = currentBlocks.find(b => b.id.toString() === id.toString());
+            if (block) block.content = val;
+        }
+
+        function removeBlock(id) {
+            document.getElementById(`block-${id}`).remove();
+            currentBlocks = currentBlocks.filter(b => b.id.toString() !== id.toString());
+        }
+
+        async function saveArticle() {
+            const idVal = document.getElementById('f-id').value;
+            const title = document.getElementById('f-title').value;
+            const isEdit = !!document.getElementById('article-id').value;
+
+            if (!idVal || !title) return alert('ID and Title are required');
+            const id = parseInt(idVal);
+
+            const moduleData = {
+                id: id,
+                title,
+                description: document.getElementById('f-description').value,
+                duration: document.getElementById('f-duration').value,
+                icon: document.getElementById('f-icon').value
+            };
+
+            try {
+                // 1. Save Module Metadata
+                let mError;
+                if (isEdit) {
+                    ({ error: mError } = await supabaseClient.from('educational_modules').update(moduleData).eq('id', id));
+                } else {
+                    // Pre-check for local duplicates before attempting DB insert
+                    if (modules.some(m => m.id === id)) {
+                        throw new Error(`ID ${id} already exists. Please use the suggested ID or another unique number.`);
+                    }
+                    ({ error: mError } = await supabaseClient.from('educational_modules').insert([moduleData]));
+                }
+                
+                if (mError) throw mError;
+
+                // 2. Clear and Save Paragraphs
+                if (isEdit) await supabaseClient.from('educational_module_paragraphs').delete().eq('module_id', id);
+                
+                const paragraphData = currentBlocks.map((b, index) => ({
+                    module_id: parseInt(id),
+                    order_index: index,
+                    type: b.type,
+                    paragraph: b.type === 'text' ? b.content : '', // Use empty string instead of null
+                    image_url: b.type === 'image' ? b.content : ''  // Use empty string instead of null
+                }));
+
+
+                if (paragraphData.length > 0) {
+                    const { error: pError } = await supabaseClient.from('educational_module_paragraphs').insert(paragraphData);
+                    if (pError) throw pError;
+                }
+
+                closeArticleModal();
+                loadArticles();
+            } catch (err) { alert('Save Failed: ' + err.message); }
         }
 
         function closeArticleModal() {
@@ -179,47 +408,12 @@
             document.getElementById('modal-backdrop').classList.add('hidden');
         }
 
-        async function saveArticle() {
-            const id = document.getElementById('f-id').value;
-            const title = document.getElementById('f-title').value;
-            const description = document.getElementById('f-description').value;
-            const duration = document.getElementById('f-duration').value;
-            const icon = document.getElementById('f-icon').value;
-            const isEdit = !!document.getElementById('article-id').value;
-
-            if (!id || !title) return alert('ID and Title are required');
-
-            const payload = { id: parseInt(id), title, description, duration, icon };
-
-            try {
-                let error;
-                if (isEdit) {
-                    ({ error } = await supabaseClient.from('educational_modules').update(payload).eq('id', id));
-                } else {
-                    ({ error } = await supabaseClient.from('educational_modules').insert([payload]));
-                }
-
-                if (error) throw error;
-                
-                closeArticleModal();
-                loadArticles();
-            } catch (err) {
-                console.error(err);
-                alert('Error saving article: ' + err.message);
-            }
-        }
-
         async function deleteArticle(id) {
-            if (!confirm('Are you sure you want to delete this article? This will also remove completion data for users.')) return;
-
+            if (!confirm('Delete this article and all its content?')) return;
             try {
-                const { error } = await supabaseClient.from('educational_modules').delete().eq('id', id);
-                if (error) throw error;
+                await supabaseClient.from('educational_modules').delete().eq('id', id);
                 loadArticles();
-            } catch (err) {
-                console.error(err);
-                alert('Error deleting article: ' + err.message);
-            }
+            } catch (err) { alert(err.message); }
         }
 
         loadArticles();
