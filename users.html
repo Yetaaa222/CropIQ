@@ -154,7 +154,7 @@
                             <tr>
                                 <th class="px-6 py-4">User</th>
                                 <th class="px-6 py-4">Province</th>
-                                <th class="px-6 py-4">Experience</th>
+                                
                                 <th class="px-6 py-4">Farms</th>
                                 <th class="px-6 py-4">Joined</th>
                                 <th class="px-6 py-4 text-right">Actions</th>
@@ -197,8 +197,6 @@
                     <p id="u-farm-size" class="font-bold text-gray-800 text-sm">Not set</p>
                 </div>
                 <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                    <div class="flex items-center gap-2 mb-2 text-gray-400"><span class="text-lg">⏳</span><span class="text-[10px] font-bold uppercase tracking-wider">Experience</span></div>
-                    <p id="u-experience" class="font-bold text-gray-800 text-sm">0 Years</p>
                 </div>
                 <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
                     <div class="flex items-center gap-2 mb-2 text-gray-400"><span class="text-lg">🧪</span><span class="text-[10px] font-bold uppercase tracking-wider">Soil Type</span></div>
@@ -252,7 +250,6 @@
                         </div>
                     </td>
                     <td class="px-6 py-4 text-gray-500">${u.province || '—'}</td>
-                    <td class="px-6 py-4 text-gray-500">${u.experience_years || 0} yrs</td>
                     <td class="px-6 py-4 text-gray-500">${(u.selected_crops || []).length} crops</td>
                     <td class="px-6 py-4 text-gray-400 text-xs">${new Date(u.created_at).toLocaleDateString()}</td>
                     <td class="px-6 py-4 text-right">
@@ -290,7 +287,6 @@
                 document.getElementById('u-avatar').innerText = profile.full_name.charAt(0);
                 document.getElementById('u-province').innerText = profile.province || 'Not set';
                 document.getElementById('u-farm-size').innerText = profile.farm_size || 'Not set';
-                document.getElementById('u-experience').innerText = `${profile.experience_years || 0} Years`;
                 document.getElementById('u-soil').innerText = profile.soil_type || 'Not set';
 
                 const crops = profile.selected_crops || [];

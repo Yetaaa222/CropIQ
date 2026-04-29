@@ -201,6 +201,25 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
     catch (e) { console.error('Error loading crops:', e); }
   };
 
+  const handleNavigateToRecommendations = () => {
+    if (!userProfile?.farm_size || !userProfile?.soil_type) {
+      Alert.alert(
+        "Complete Your Profile",
+        "Please enter your soil type and farm size on the profile page to receive personalized crop recommendations.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Go to Profile", onPress: () => setCurrentPage('profile') }
+        ]
+      );
+    } else {
+      if (selectedLocation) {
+        setCurrentPage('recommendations');
+      } else {
+        setShowLocationModal(true);
+      }
+    }
+  };
+
   // ── Season helpers ────────────────────────────────────────────
 
   const getCurrentSeasonInfo = () => {
@@ -229,200 +248,218 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
 
   // ── Suitability ───────────────────────────────────────────────
 
- const calculateCropSuitability = (crop, weather, monthlyWeather = null, currentMonth = null) => {
-  if (!weather || !crop) return 0;
+  const calculateCropSuitability = (crop, weather, monthlyWeather = null, currentMonth = null) => {
+    if (!weather || !crop) return 0;
 
-  const scores = [];
-  const weights = [];
+    const scores = [];
+    const weights = [];
 
-  // ── 1. RAINFALL — highest weight (40%) ────────────────────
-  // Most critical factor for rain-fed Zambian farming
-  if (crop.rainfall) {
-    const m = crop.rainfall.match(/(\d+)-(\d+)/);
-    if (m) {
-      const min = parseFloat(m[1]);
-      const max = parseFloat(m[2]);
-      const actual = weather.rainfall?.annual || 0;
-      const mid = (min + max) / 2;
-      const range = max - min;
+    // ── 1. RAINFALL — highest weight (40%) ────────────────────
+    // Most critical factor for rain-fed Zambian farming
+    if (crop.rainfall) {
+      const m = crop.rainfall.match(/(\d+)-(\d+)/);
+      if (m) {
+        const min = parseFloat(m[1]);
+        const max = parseFloat(m[2]);
+        const actual = weather.rainfall?.annual || 0;
+        const mid = (min + max) / 2;
+        const range = max - min;
 
-      let score;
-      if (actual >= min && actual <= max) {
-        // Within range — score based on how close to ideal midpoint
-        const distanceFromMid = Math.abs(actual - mid);
-        score = 100 - (distanceFromMid / (range / 2)) * 15; // 85-100
-      } else if (actual < min) {
-        // Too dry — penalise heavily, drought kills crops
-        const deficit = min - actual;
-        score = Math.max(0, 80 - (deficit / min) * 120);
-      } else {
-        // Too wet — penalise moderately, flooding is bad but some crops tolerate it
-        const excess = actual - max;
-        score = Math.max(10, 80 - (excess / max) * 80);
+        let score;
+        if (actual >= min && actual <= max) {
+          // Within range — score based on how close to ideal midpoint
+          const distanceFromMid = Math.abs(actual - mid);
+          score = 100 - (distanceFromMid / (range / 2)) * 15; // 85-100
+        } else if (actual < min) {
+          // Too dry — penalise heavily, drought kills crops
+          const deficit = min - actual;
+          score = Math.max(0, 80 - (deficit / min) * 120);
+        } else {
+          // Too wet — penalise moderately, flooding is bad but some crops tolerate it
+          const excess = actual - max;
+          score = Math.max(10, 80 - (excess / max) * 80);
+        }
+        scores.push(Math.round(score));
+        weights.push(40);
       }
-      scores.push(Math.round(score));
-      weights.push(40);
     }
-  }
 
-  // ── 2. TEMPERATURE — high weight (30%) ────────────────────
-  if (crop.tempRange) {
-    const m = crop.tempRange.match(/(\d+)-(\d+)/);
-    if (m) {
-      const min = parseFloat(m[1]);
-      const max = parseFloat(m[2]);
+    // ── 2. TEMPERATURE — high weight (30%) ────────────────────
+    if (crop.tempRange) {
+      const m = crop.tempRange.match(/(\d+)-(\d+)/);
+      if (m) {
+        const min = parseFloat(m[1]);
+        const max = parseFloat(m[2]);
 
-      // Use monthly temp if available for the current planting month
-      // otherwise fall back to annual average
-      const actual = (monthlyWeather && currentMonth)
-        ? (monthlyWeather[currentMonth]?.temperature || weather.temperature?.avg || 0)
-        : (weather.temperature?.avg || 0);
+        // Use monthly temp if available for the current planting month
+        // otherwise fall back to annual average
+        const actual = (monthlyWeather && currentMonth)
+          ? (monthlyWeather[currentMonth]?.temperature || weather.temperature?.avg || 0)
+          : (weather.temperature?.avg || 0);
 
-      const mid = (min + max) / 2;
-      const range = max - min;
+        const mid = (min + max) / 2;
+        const range = max - min;
 
-      let score;
-      if (actual >= min && actual <= max) {
-        const distanceFromMid = Math.abs(actual - mid);
-        score = 100 - (distanceFromMid / (range / 2)) * 10; // 90-100
-      } else if (actual < min) {
-        // Too cold
-        const deficit = min - actual;
-        score = Math.max(0, 85 - deficit * 15);
-      } else {
-        // Too hot
-        const excess = actual - max;
-        score = Math.max(0, 85 - excess * 12);
+        let score;
+        if (actual >= min && actual <= max) {
+          const distanceFromMid = Math.abs(actual - mid);
+          score = 100 - (distanceFromMid / (range / 2)) * 10; // 90-100
+        } else if (actual < min) {
+          // Too cold
+          const deficit = min - actual;
+          score = Math.max(0, 85 - deficit * 15);
+        } else {
+          // Too hot
+          const excess = actual - max;
+          score = Math.max(0, 85 - excess * 12);
+        }
+        scores.push(Math.round(score));
+        weights.push(30);
       }
-      scores.push(Math.round(score));
-      weights.push(30);
     }
-  }
 
-  // ── 3. HUMIDITY — medium weight (15%) ─────────────────────
-  if (crop.humidity) {
-    const m = crop.humidity.match(/(\d+)-(\d+)/);
-    if (m) {
-      const min = parseFloat(m[1]);
-      const max = parseFloat(m[2]);
-      const actual = weather.humidity || 0;
-      const mid = (min + max) / 2;
-      const range = max - min;
+    // ── 3. HUMIDITY — medium weight (15%) ─────────────────────
+    if (crop.humidity) {
+      const m = crop.humidity.match(/(\d+)-(\d+)/);
+      if (m) {
+        const min = parseFloat(m[1]);
+        const max = parseFloat(m[2]);
+        const actual = weather.humidity || 0;
+        const mid = (min + max) / 2;
+        const range = max - min;
 
-      let score;
-      if (actual >= min && actual <= max) {
-        const distanceFromMid = Math.abs(actual - mid);
-        score = 100 - (distanceFromMid / (range / 2)) * 10;
-      } else if (actual < min) {
-        const deficit = min - actual;
-        score = Math.max(10, 85 - deficit * 2);
-      } else {
-        const excess = actual - max;
-        score = Math.max(10, 85 - excess * 2);
+        let score;
+        if (actual >= min && actual <= max) {
+          const distanceFromMid = Math.abs(actual - mid);
+          score = 100 - (distanceFromMid / (range / 2)) * 10;
+        } else if (actual < min) {
+          const deficit = min - actual;
+          score = Math.max(10, 85 - deficit * 2);
+        } else {
+          const excess = actual - max;
+          score = Math.max(10, 85 - excess * 2);
+        }
+        scores.push(Math.round(score));
+        weights.push(15);
       }
-      scores.push(Math.round(score));
-      weights.push(15);
-    }
-  }
-
-  // ── 4. WATER NEEDS vs RAINFALL PATTERN (10%) ──────────────
-  // Cross-references crop's water needs with actual rainfall pattern
-  if (crop.waterNeeds && weather.rainfall?.pattern) {
-    const waterNeeds = crop.waterNeeds.toLowerCase();
-    const pattern = weather.rainfall.pattern.toLowerCase();
-
-    let score = 70; // default neutral
-
-    if (waterNeeds.includes('high') || waterNeeds.includes('frequent')) {
-      if (pattern === 'high') score = 100;
-      else if (pattern === 'moderate') score = 65;
-      else score = 25; // low rainfall, high water needs = bad
-    } else if (waterNeeds.includes('moderate')) {
-      if (pattern === 'moderate') score = 100;
-      else if (pattern === 'high') score = 80;
-      else score = 55;
-    } else if (waterNeeds.includes('low') || waterNeeds.includes('drought')) {
-      if (pattern === 'low') score = 100;
-      else if (pattern === 'moderate') score = 85;
-      else score = 65; // high rainfall for drought-tolerant = ok but not ideal
     }
 
-    scores.push(score);
-    weights.push(10);
-  }
+    // ── 4. WATER NEEDS vs RAINFALL PATTERN (10%) ──────────────
+    // Cross-references crop's water needs with actual rainfall pattern
+    if (crop.waterNeeds && weather.rainfall?.pattern) {
+      const waterNeeds = crop.waterNeeds.toLowerCase();
+      const pattern = weather.rainfall.pattern.toLowerCase();
 
-  // ── 5. SOIL TYPE bonus (5%) — if user has set soil type ───
-  if (crop.soil && weather.soilType) {
-    const cropSoil = crop.soil.toLowerCase();
-    const farmSoil = weather.soilType.toLowerCase();
+      let score = 70; // default neutral
 
-    let score = 70;
-    if (cropSoil.includes(farmSoil) || farmSoil.includes('loam')) {
-      score = 100; // exact match or loam (grows almost anything)
-    } else if (cropSoil.includes('well-drained') && !farmSoil.includes('clay')) {
-      score = 85;
-    } else if (cropSoil.includes('clay') && farmSoil.includes('clay')) {
-      score = 100;
-    } else if (cropSoil.includes('sandy') && farmSoil.includes('sandy')) {
-      score = 100;
+      if (waterNeeds.includes('high') || waterNeeds.includes('frequent')) {
+        if (pattern === 'high') score = 100;
+        else if (pattern === 'moderate') score = 65;
+        else score = 25; // low rainfall, high water needs = bad
+      } else if (waterNeeds.includes('moderate')) {
+        if (pattern === 'moderate') score = 100;
+        else if (pattern === 'high') score = 80;
+        else score = 55;
+      } else if (waterNeeds.includes('low') || waterNeeds.includes('drought')) {
+        if (pattern === 'low') score = 100;
+        else if (pattern === 'moderate') score = 85;
+        else score = 65; // high rainfall for drought-tolerant = ok but not ideal
+      }
+
+      scores.push(score);
+      weights.push(10);
     }
 
-    scores.push(score);
-    weights.push(5);
-  }
+    // ── 5. SOIL TYPE bonus (5%) — if user has set soil type ───
+    if (crop.soil && weather.soilType) {
+      const cropSoil = crop.soil.toLowerCase();
+      const farmSoil = weather.soilType.toLowerCase();
 
-  if (scores.length === 0) return crop.suitability || 70;
+      let score = 70;
+      if (cropSoil.includes(farmSoil) || farmSoil.includes('loam')) {
+        score = 100; // exact match or loam (grows almost anything)
+      } else if (cropSoil.includes('well-drained') && !farmSoil.includes('clay')) {
+        score = 85;
+      } else if (cropSoil.includes('clay') && farmSoil.includes('clay')) {
+        score = 100;
+      } else if (cropSoil.includes('sandy') && farmSoil.includes('sandy')) {
+        score = 100;
+      }
 
-  // ── Weighted average ───────────────────────────────────────
-  const totalWeight = weights.reduce((a, b) => a + b, 0);
-  const weightedSum = scores.reduce((sum, score, i) => sum + score * weights[i], 0);
-  const finalScore = Math.round(weightedSum / totalWeight);
+      scores.push(score);
+      weights.push(5);
+    }
 
-  return Math.min(100, Math.max(0, finalScore));
-};
+    // ── 6. FARM SIZE personalization (5%) ─────────────────────
+    if (weather.farmSize) {
+      const size = weather.farmSize.toLowerCase();
+      const isSmall = size.includes('small') || size.includes('1') || (size.includes('2') && !size.includes('20'));
+      const cropName = (crop.name || '').toLowerCase();
+      
+      const intensiveCrops = ['tomato', 'onion', 'cabbage', 'rape', 'kale', 'pepper', 'beans'];
+      const extensiveCrops = ['maize', 'soy', 'sunflower', 'wheat', 'cotton', 'tobacco'];
+      
+      let score = 75;
+      if (isSmall && intensiveCrops.some(c => cropName.includes(c))) score = 100;
+      else if (!isSmall && extensiveCrops.some(c => cropName.includes(c))) score = 100;
+      else if (isSmall && extensiveCrops.some(c => cropName.includes(c))) score = 65;
+      
+      scores.push(score);
+      weights.push(5);
+    }
 
-const calculateSeasonalSuitability = (crop, weather, currentMonth) => {
-  // Pass monthlyWeatherData so temperature uses the right month
-  let base = calculateCropSuitability(crop, weather, monthlyWeatherData, currentMonth);
+    if (scores.length === 0) return crop.suitability || 70;
 
-  const inSeason = isPlantingSeason(crop.growingMonths, currentMonth);
+    // ── Weighted average ───────────────────────────────────────
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    const weightedSum = scores.reduce((sum, score, i) => sum + score * weights[i], 0);
+    const finalScore = Math.round(weightedSum / totalWeight);
 
-  // More nuanced seasonal adjustment
-  if (inSeason) {
-    // How deep into planting season are we?
-    base = Math.min(100, base + 12);
-  } else {
-    // How far out of season?
-    base = Math.max(0, base - 25);
-  }
+    return Math.min(100, Math.max(0, finalScore));
+  };
 
-  return Math.round(base);
-};
+  const calculateSeasonalSuitability = (crop, weather, currentMonth) => {
+    // Pass monthlyWeatherData so temperature uses the right month
+    let base = calculateCropSuitability(crop, weather, monthlyWeatherData, currentMonth);
 
-const getSuitabilityLabel = (score) => {
-  if (score >= 90) return 'Excellent';
-  if (score >= 78) return 'Very Good';
-  if (score >= 65) return 'Good';
-  if (score >= 52) return 'Moderate';
-  if (score >= 38) return 'Risky';
-  if (score >= 20) return 'Poor';
-  return 'Not Suitable';
-};
-const getSuitabilityColor = (score) => {
-  if (score >= 90) return '#065f46';
-  if (score >= 78) return '#166534';
-  if (score >= 65) return '#854d0e';
-  if (score >= 52) return '#9a3412';
-  return '#991b1b';
-};
+    const inSeason = isPlantingSeason(crop.growingMonths, currentMonth);
 
-const getSuitabilityBackground = (score) => {
-  if (score >= 90) return '#d1fae5';
-  if (score >= 78) return '#dcfce7';
-  if (score >= 65) return '#fef9c3';
-  if (score >= 52) return '#ffedd5';
-  return '#fee2e2';
-};
+    // More nuanced seasonal adjustment
+    if (inSeason) {
+      // How deep into planting season are we?
+      base = Math.min(100, base + 12);
+    } else {
+      // How far out of season?
+      base = Math.max(0, base - 25);
+    }
+
+    return Math.round(base);
+  };
+
+  const getSuitabilityLabel = (score) => {
+    if (score >= 90) return 'Excellent';
+    if (score >= 78) return 'Very Good';
+    if (score >= 65) return 'Good';
+    if (score >= 52) return 'Moderate';
+    if (score >= 38) return 'Risky';
+    if (score >= 20) return 'Poor';
+    return 'Not Suitable';
+  };
+  const getSuitabilityColor = (score) => {
+    if (score >= 90) return '#065f46';
+    if (score >= 78) return '#166534';
+    if (score >= 65) return '#854d0e';
+    if (score >= 52) return '#9a3412';
+    return '#991b1b';
+  };
+
+  const getSuitabilityBackground = (score) => {
+    if (score >= 90) return '#d1fae5';
+    if (score >= 78) return '#dcfce7';
+    if (score >= 65) return '#fef9c3';
+    if (score >= 52) return '#ffedd5';
+    return '#fee2e2';
+  };
 
   // ── Geocoding ─────────────────────────────────────────────────
 
@@ -534,6 +571,7 @@ const getSuitabilityBackground = (score) => {
           humidity: Math.max(40, Math.min(90, avgHumidity)),
           growingDays: Math.min(240, Math.round(precip.filter(p => p > 1).length * 1.5)),
           soilType: userProfile?.soil_type || null,
+          farmSize: userProfile?.farm_size || null,
         };
 
         setMonthlyWeatherData(calculateMonthlyWeather(data, data.daily.time));
@@ -719,7 +757,7 @@ const getSuitabilityBackground = (score) => {
   const BottomNav = () => (
     <View style={styles.bottomNav}>
       <NavButton icon={<Ionicons name="home" size={22} color={currentPage === 'home' ? '#16a34a' : '#666'} />} label="Home" active={currentPage === 'home'} onPress={() => setCurrentPage('home')} />
-      <NavButton icon={<Ionicons name="leaf" size={22} color={currentPage === 'recommendations' ? '#16a34a' : '#666'} />} label="Crops" active={currentPage === 'recommendations'} onPress={() => setCurrentPage('recommendations')} />
+      <NavButton icon={<Ionicons name="leaf" size={22} color={currentPage === 'recommendations' ? '#16a34a' : '#666'} />} label="Crops" active={currentPage === 'recommendations'} onPress={handleNavigateToRecommendations} />
       <NavButton icon={<Ionicons name="book" size={22} color={currentPage === 'education' ? '#16a34a' : '#666'} />} label="Learn" active={currentPage === 'education'} onPress={() => setCurrentPage('education')} />
       <NavButton icon={<Ionicons name="person" size={22} color={currentPage === 'profile' ? '#16a34a' : '#666'} />} label="Profile" active={currentPage === 'profile'} onPress={() => setCurrentPage('profile')} />
     </View>
@@ -761,7 +799,7 @@ const getSuitabilityBackground = (score) => {
             <Text style={styles.recommendationTitle}>Get Crop Recommendations</Text>
             <Text style={styles.recommendationSubtitle}>Based on your local weather and soil conditions</Text>
           </View>
-          <TouchableOpacity style={styles.viewRecommendationsButton} onPress={() => selectedLocation ? setCurrentPage('recommendations') : setShowLocationModal(true)}>
+          <TouchableOpacity style={styles.viewRecommendationsButton} onPress={handleNavigateToRecommendations}>
             <Text style={styles.viewRecommendationsButtonText}>{selectedLocation ? 'View Recommendations' : 'Select Location'}</Text>
           </TouchableOpacity>
         </View>
@@ -815,22 +853,34 @@ const getSuitabilityBackground = (score) => {
     useEffect(() => {
       if (monthlyWeatherData[selectedMonth] && crops.length > 0) {
         const mw = monthlyWeatherData[selectedMonth];
+        const currentLocWeather = {
+            ...mw,
+            rainfall: { annual: mw.rainfall, pattern: mw.rainfall > 100 ? 'High' : mw.rainfall > 50 ? 'Moderate' : 'Low' },
+            soilType: userProfile?.soil_type || null,
+            farmSize: userProfile?.farm_size || null
+        };
+        
         const recs = crops.map(crop => {
-          let s = 50;
-          const tm = crop.tempRange?.match(/(\d+)-(\d+)/);
-          if (tm) { const [min, max] = [parseInt(tm[1]), parseInt(tm[2])]; if (mw.temperature >= min && mw.temperature <= max) s += 25; else if (mw.temperature >= min - 3 && mw.temperature <= max + 3) s += 15; }
-          const rm = crop.rainfall?.match(/(\d+)-(\d+)/);
-          if (rm) { const [min, max] = [parseInt(rm[1]), parseInt(rm[2])]; if (mw.rainfall >= min && mw.rainfall <= max) s += 25; else if (mw.rainfall >= min - 30 && mw.rainfall <= max + 30) s += 15; }
+          const s = calculateCropSuitability(crop, currentLocWeather, monthlyWeatherData, selectedMonth);
           const inSeason = isPlantingSeason(crop.growingMonths, selectedMonth);
-          if (inSeason) s += 15;
-          s = Math.min(100, Math.max(0, s));
-          return { ...crop, suitability: s, suitabilityLabel: getSuitabilityLabel(s), inPlantingSeason: inSeason, seasonalBoost: inSeason ? '✓ In Season' : '⚠ Off Season' };
-        }).sort((a, b) => { if (a.inPlantingSeason && !b.inPlantingSeason) return -1; if (!a.inPlantingSeason && b.inPlantingSeason) return 1; return b.suitability - a.suitability; });
+          
+          return { 
+            ...crop, 
+            suitability: s, 
+            suitabilityLabel: getSuitabilityLabel(s), 
+            inPlantingSeason: inSeason, 
+            seasonalBoost: inSeason ? '✓ In Season' : '⚠ Off Season' 
+          };
+        }).sort((a, b) => { 
+          if (a.inPlantingSeason && !b.inPlantingSeason) return -1; 
+          if (!a.inPlantingSeason && b.inPlantingSeason) return 1; 
+          return b.suitability - a.suitability; 
+        });
         setMonthlyRecommendations(recs);
       } else if (recommendations.length > 0) {
         setMonthlyRecommendations(recommendations);
       }
-    }, [selectedMonth, monthlyWeatherData, crops, recommendations]);
+    }, [selectedMonth, monthlyWeatherData, crops, recommendations, userProfile]);
 
     const handleCropToggle = async (cropName) => {
       if (!user) { alert('Please log in to select crops'); return; }
@@ -880,7 +930,7 @@ const getSuitabilityBackground = (score) => {
                 )}
               </View>
 
-              {recommendations.length > 0
+              {monthlyRecommendations.length > 0
                 ? monthlyRecommendations.filter(crop => isPlantingSeason(crop.growingMonths, selectedMonth)).sort((a, b) => b.suitability - a.suitability).map(crop => {
                     const isSel = selectedCrops.includes(crop.name);
                     const isUpd = isUpdatingCrop === crop.name;
