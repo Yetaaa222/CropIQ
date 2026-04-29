@@ -1515,6 +1515,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     borderRadius: 12,
   },
+  inlineInput: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#111827',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    marginTop: 4,
+  },
+  profileHeaderEditButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
 });
 
 export default styles;

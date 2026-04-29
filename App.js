@@ -18,6 +18,7 @@ import {
   saveCropRecommendation, getCropRecommendations, getLearningProgress,
   completeModule, updateSelectedCrops, getAllCrops, updateLearningProgress,
   getEducationalModules, getModuleParagraphs, uploadProfilePictureToStorage,
+  updateUserProfile,
 } from './database.js';
 import styles from './Styles.js';
 import { base } from './supabase.js';
@@ -122,7 +123,6 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
   // Modals — showLocationModal and showMapModal are NEVER true at the same time
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
-  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
 
   // Map
@@ -622,18 +622,6 @@ const getSuitabilityBackground = (score) => {
 
   // ── Profile helpers ───────────────────────────────────────────
 
-  const openEditProfile = () => {
-    setEditFullName(userProfile?.full_name || user?.user_metadata?.full_name || '');
-    setEditProvince(userProfile?.province || selectedLocationData?.province || '');
-    setEditExperienceYears(userProfile?.experience_years ? String(userProfile.experience_years) : '');
-    setEditPrimaryCrops(userProfile?.primary_crops?.join(', ') || '');
-    setEditFarmSize(userProfile?.farm_size || '');
-    setEditSoilType(userProfile?.soil_type || '');
-    setEditProfilePicture(userProfile?.profile_picture_url || null);
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setShowEditProfileModal(true);
-  };
-
   const pickProfilePicture = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { alert('Camera roll permission required'); return; }
@@ -641,7 +629,7 @@ const getSuitabilityBackground = (score) => {
     if (!result.canceled) setEditProfilePicture(result.assets[0].uri);
   };
 
-  const handleSaveProfile = async () => {
+  const handleSaveInlineProfile = async () => {
     if (!user) { alert('Please log in'); return; }
     setIsSavingProfile(true);
     try {
@@ -666,7 +654,7 @@ const getSuitabilityBackground = (score) => {
 
       const updatedProfile = await getUserProfile();
       setUserProfile(updatedProfile);
-      setShowEditProfileModal(false);
+      setIsEditing(false);
       alert('Profile saved successfully!');
     } catch (e) {
       console.error('Error saving profile:', e);
@@ -1126,18 +1114,54 @@ const getSuitabilityBackground = (score) => {
         {/* Header */}
         <View style={styles.profileMainHeader}>
           <View style={styles.profileHeaderContent}>
-            <View style={styles.profileHeaderIconCircle}>
-              {userProfile?.profile_picture_url ? (
-                <Image source={{ uri: userProfile.profile_picture_url }} style={{ width: 60, height: 60, borderRadius: 30 }} />
+            <TouchableOpacity 
+              onPress={isEditing ? pickProfilePicture : undefined}
+              disabled={!isEditing}
+              style={[styles.profileHeaderIconCircle, isEditing && { backgroundColor: 'rgba(255, 255, 255, 0.4)' }]}
+            >
+              {(isEditing ? editProfilePicture : userProfile?.profile_picture_url) ? (
+                <Image source={{ uri: isEditing ? editProfilePicture : userProfile.profile_picture_url }} style={{ width: 60, height: 60, borderRadius: 30 }} />
               ) : (
                 <Ionicons name="person" size={32} color="#FFFFFF" />
               )}
-            </View>
-            <View>
-              <Text style={styles.profileHeaderTitle}>My Profile</Text>
-              <Text style={styles.profileHeaderSubtitle}>Manage your farm information</Text>
+              {isEditing && (
+                <View style={{ position: 'absolute', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 15, padding: 4 }}>
+                  <Ionicons name="camera" size={16} color="#FFFFFF" />
+                </View>
+              )}
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              {isEditing ? (
+                <TextInput
+                  style={[styles.inlineInput, { backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#FFFFFF', borderColor: 'rgba(255, 255, 255, 0.3)', fontWeight: 'bold', fontSize: 20 }]}
+                  value={editFullName}
+                  onChangeText={setEditFullName}
+                  placeholder="Your Name"
+                  placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                />
+              ) : (
+                <Text style={styles.profileHeaderTitle}>{userProfile?.full_name || user?.user_metadata?.full_name || 'My Profile'}</Text>
+              )}
+              <Text style={styles.profileHeaderSubtitle}>{userProfile?.province ? `${userProfile.province}, Zambia` : 'Manage your farm information'}</Text>
             </View>
           </View>
+          <TouchableOpacity 
+            style={styles.profileHeaderEditButton}
+            onPress={isEditing ? handleSaveInlineProfile : () => {
+              setEditFullName(userProfile?.full_name || user?.user_metadata?.full_name || '');
+              setEditProfilePicture(userProfile?.profile_picture_url || null);
+              setEditFarmSize(userProfile?.farm_size || '');
+              setEditSoilType(userProfile?.soil_type || '');
+              setEditPrimaryCrops(userProfile?.primary_crops?.join(', ') || '');
+              setIsEditing(true);
+            }}
+          >
+            {isSavingProfile ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Ionicons name={isEditing ? "checkmark" : "create-outline"} size={22} color="#FFFFFF" />
+            )}
+          </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.profileContentScroll} showsVerticalScrollIndicator={false}>
@@ -1186,9 +1210,6 @@ const getSuitabilityBackground = (score) => {
           <View style={styles.profileSectionCard}>
             <View style={styles.profileSectionHeader}>
               <Text style={styles.profileSectionTitle}>Farm Details</Text>
-              <TouchableOpacity style={styles.profileSectionEditButton} onPress={openEditProfile}>
-                <Text style={styles.profileSectionEditButtonText}>Edit</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Farm Size */}
@@ -1196,9 +1217,18 @@ const getSuitabilityBackground = (score) => {
               <View style={[styles.profileDetailIconCircle, { backgroundColor: '#DCFCE7' }]}>
                 <MaterialCommunityIcons name="leaf" size={20} color="#16a34a" />
               </View>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.profileDetailLabel}>Farm Size</Text>
-                <Text style={styles.profileDetailValue}>{userProfile?.farm_size || 'Not specified'}</Text>
+                {isEditing ? (
+                  <TextInput
+                    style={styles.inlineInput}
+                    value={editFarmSize}
+                    onChangeText={setEditFarmSize}
+                    placeholder="e.g. 2 hectares"
+                  />
+                ) : (
+                  <Text style={styles.profileDetailValue}>{userProfile?.farm_size || 'Not specified'}</Text>
+                )}
               </View>
             </View>
 
@@ -1207,9 +1237,18 @@ const getSuitabilityBackground = (score) => {
               <View style={[styles.profileDetailIconCircle, { backgroundColor: '#FEF3C7' }]}>
                 <MaterialCommunityIcons name="test-tube" size={20} color="#D97706" />
               </View>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.profileDetailLabel}>Soil Type</Text>
-                <Text style={styles.profileDetailValue}>{userProfile?.soil_type || 'Not specified'}</Text>
+                {isEditing ? (
+                  <TextInput
+                    style={styles.inlineInput}
+                    value={editSoilType}
+                    onChangeText={setEditSoilType}
+                    placeholder="e.g. Clay, Sandy, Loam"
+                  />
+                ) : (
+                  <Text style={styles.profileDetailValue}>{userProfile?.soil_type || 'Not specified'}</Text>
+                )}
               </View>
             </View>
 
@@ -1218,13 +1257,40 @@ const getSuitabilityBackground = (score) => {
               <View style={[styles.profileDetailIconCircle, { backgroundColor: '#DBEAFE' }]}>
                 <Ionicons name="leaf-outline" size={20} color="#2563EB" />
               </View>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.profileDetailLabel}>Current Crops</Text>
-                <Text style={styles.profileDetailValue}>
-                  {userProfile?.primary_crops?.join(', ') || 'Not specified'}
-                </Text>
+                {isEditing ? (
+                  <TextInput
+                    style={styles.inlineInput}
+                    value={editPrimaryCrops}
+                    onChangeText={setEditPrimaryCrops}
+                    placeholder="Maize, Groundnuts, etc."
+                  />
+                ) : (
+                  <Text style={styles.profileDetailValue}>
+                    {userProfile?.primary_crops?.join(', ') || 'Not specified'}
+                  </Text>
+                )}
               </View>
             </View>
+
+            {isEditing && (
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
+                <TouchableOpacity 
+                  style={[styles.viewRecommendationsButton, { flex: 1, backgroundColor: '#f3f4f6' }]} 
+                  onPress={() => setIsEditing(false)}
+                >
+                  <Text style={[styles.viewRecommendationsButtonText, { color: '#6b7280' }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.viewRecommendationsButton, { flex: 2 }]} 
+                  onPress={handleSaveInlineProfile}
+                  disabled={isSavingProfile}
+                >
+                  {isSavingProfile ? <ActivityIndicator color="#fff" /> : <Text style={styles.viewRecommendationsButtonText}>Save Changes</Text>}
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* Activity Card */}
@@ -1456,52 +1522,6 @@ const getSuitabilityBackground = (score) => {
               </View>
             </View>
           )}
-        </SafeAreaView>
-      </Modal>
-
-      {/* ────────────────────────────────────────────────────────
-          MODAL 3 — Edit profile
-      ──────────────────────────────────────────────────────── */}
-      <Modal visible={showEditProfileModal} animationType="slide">
-        <SafeAreaView style={styles.modalFull}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalHeaderTitle}>Edit Profile</Text>
-            <TouchableOpacity onPress={() => setShowEditProfileModal(false)}><Text style={styles.closeIcon}>✕</Text></TouchableOpacity>
-          </View>
-          <ScrollView style={styles.modalBody}>
-            <View style={{ marginBottom: 20, alignItems: 'center' }}>
-              <View style={styles.editProfilePictureContainer}>
-                {editProfilePicture ? <Image source={{ uri: editProfilePicture }} style={styles.editProfilePictureImage} /> : <Text style={styles.editProfilePictureEmoji}>📸</Text>}
-              </View>
-              <TouchableOpacity style={styles.changeProfilePictureButton} onPress={pickProfilePicture} disabled={isUploadingProfilePicture}>
-                <Ionicons name="camera" size={18} color="#ffffff" />
-                <Text style={styles.changeProfilePictureText}>{isUploadingProfilePicture ? 'Uploading...' : 'Change Photo'}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {[
-              { label: 'Full name', value: editFullName, setter: setEditFullName, placeholder: 'Full name' },
-              { label: 'Province', value: editProvince, setter: setEditProvince, placeholder: 'Province' },
-              { label: 'Experience (years)', value: editExperienceYears, setter: setEditExperienceYears, placeholder: 'e.g. 5', numeric: true },
-              { label: 'Primary crops (comma separated)', value: editPrimaryCrops, setter: setEditPrimaryCrops, placeholder: 'Maize, Groundnuts' },
-              { label: 'Farm size', value: editFarmSize, setter: setEditFarmSize, placeholder: 'e.g. 2 hectares' },
-              { label: 'Soil Type', value: editSoilType, setter: setEditSoilType, placeholder: 'e.g. Clay, Sandy, Loam' },
-            ].map(field => (
-              <View key={field.label} style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 14, color: '#6b7280', marginBottom: 6 }}>{field.label}</Text>
-                <View style={styles.loginInputContainer}>
-                  <TextInput style={styles.loginInput} value={field.value} onChangeText={field.setter} placeholder={field.placeholder} keyboardType={field.numeric ? 'numeric' : 'default'} />
-                </View>
-              </View>
-            ))}
-
-            <TouchableOpacity style={[styles.viewRecommendationsButton, { marginTop: 8 }]} onPress={handleSaveProfile} disabled={isSavingProfile}>
-              {isSavingProfile ? <ActivityIndicator color="#fff" /> : <Text style={styles.viewRecommendationsButtonText}>Save</Text>}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setShowEditProfileModal(false)}>
-              <Text style={styles.closeButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </ScrollView>
         </SafeAreaView>
       </Modal>
 
