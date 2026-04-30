@@ -117,6 +117,10 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             <span class="font-semibold">Knowledge</span>
                         </a>
+                        <a href="crops.html" class="sidebar-item group">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20h10M12 4c3.314 0 6 2.686 6 6 0 4.5-6 10-6 10S6 14.5 6 10c0-3.314 2.686-6 6-6z"></path></svg>
+                            <span class="font-semibold">Crops</span>
+                        </a>
                     </nav>
                 </div>
 
@@ -269,7 +273,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Footer RLS Notice -->
                 <div id="rls-warning" class="mt-8 p-4 bg-amber-50 border border-amber-100 rounded-xl hidden">
                     <div class="flex gap-3">
@@ -653,6 +656,128 @@
             });
         }
 
+        const CROP_IMAGE_BUCKETS = ['crop-images', 'crops', 'profile_pictures'];
+
+        const getNumberOrNull = (value) => {
+            if (value === '' || value === null || value === undefined) return null;
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+        };
+
+        async function uploadCropImage(file, cropName) {
+            if (!file) return { image_path: null, image_url: null };
+
+            const safeName = (cropName || 'crop')
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
+            const extension = (file.name.split('.').pop() || 'jpg').toLowerCase();
+            const filePath = `crops/${safeName || 'crop'}-${Date.now()}.${extension}`;
+
+            let lastError = null;
+            for (const bucket of CROP_IMAGE_BUCKETS) {
+                const { error } = await supabaseClient.storage
+                    .from(bucket)
+                    .upload(filePath, file, {
+                        upsert: false,
+                        cacheControl: '3600',
+                        contentType: file.type || 'image/jpeg'
+                    });
+
+                if (!error) {
+                    const { data } = supabaseClient.storage.from(bucket).getPublicUrl(filePath);
+                    return { image_path: filePath, image_url: data.publicUrl };
+                }
+
+                lastError = error;
+                if (!(error.message || '').toLowerCase().includes('bucket not found')) break;
+            }
+
+            throw lastError || new Error('Failed to upload crop image');
+        }
+
+        async function createCropFromAdmin(form) {
+            const name = document.getElementById('crop-name').value.trim();
+            const fullName = document.getElementById('crop-full-name').value.trim();
+            const category = document.getElementById('crop-category').value.trim();
+            const imageFile = document.getElementById('crop-image-file').files[0];
+
+            if (!name || !fullName || !category) {
+                throw new Error('Name, full name, and category are required');
+            }
+
+            const { data: maxCrop, error: maxErr } = await supabaseClient
+                .from('crops')
+                .select('id')
+                .order('id', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (maxErr) throw maxErr;
+
+            const nextId = (maxCrop?.id || 0) + 1;
+            const uploadedImage = await uploadCropImage(imageFile, name);
+            const diseasesInput = document.getElementById('crop-common-diseases').value.trim();
+            const commonDiseases = diseasesInput
+                ? diseasesInput.split(',').map(s => s.trim()).filter(Boolean)
+                : null;
+
+            const payload = {
+                id: nextId,
+                name,
+                full_name: fullName,
+                category,
+                short_description: document.getElementById('crop-short-description').value.trim() || null,
+                description: document.getElementById('crop-description').value.trim() || null,
+                temp_range_min: getNumberOrNull(document.getElementById('crop-temp-min').value),
+                temp_range_max: getNumberOrNull(document.getElementById('crop-temp-max').value),
+                rainfall_min: getNumberOrNull(document.getElementById('crop-rainfall-min').value),
+                rainfall_max: getNumberOrNull(document.getElementById('crop-rainfall-max').value),
+                humidity_min: getNumberOrNull(document.getElementById('crop-humidity-min').value),
+                humidity_max: getNumberOrNull(document.getElementById('crop-humidity-max').value),
+                soil_type: document.getElementById('crop-soil-type').value.trim() || null,
+                water_needs: document.getElementById('crop-water-needs').value.trim() || null,
+                growing_months: document.getElementById('crop-growing-months').value.trim() || null,
+                common_diseases: commonDiseases,
+                management_practices: document.getElementById('crop-management-practices').value.trim() || null,
+                image_path: uploadedImage.image_path,
+                image_url: uploadedImage.image_url
+            };
+
+            const { error: insertErr } = await supabaseClient.from('crops').insert(payload);
+            if (insertErr) throw insertErr;
+
+            form.reset();
+        }
+
+        function initAddCropForm() {
+            const form = document.getElementById('add-crop-form');
+            const status = document.getElementById('add-crop-status');
+            const submitBtn = document.getElementById('add-crop-submit');
+            if (!form || !status || !submitBtn) return;
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                submitBtn.disabled = true;
+                status.className = 'text-xs text-gray-500';
+                status.textContent = 'Saving crop...';
+
+                try {
+                    await createCropFromAdmin(form);
+                    status.className = 'text-xs text-green-600 font-semibold';
+                    status.textContent = 'Crop saved successfully.';
+                    await fetchAnalytics();
+                } catch (error) {
+                    console.error('Error creating crop from admin:', error);
+                    status.className = 'text-xs text-red-600 font-semibold';
+                    status.textContent = `Failed: ${error.message || 'Could not save crop'}`;
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        initAddCropForm();
         fetchAnalytics();
     </script>
 </body>

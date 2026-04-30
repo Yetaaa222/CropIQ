@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CropIQ Admin | Add Crops</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
+            border-radius: 0.75rem; color: #94a3b8; transition: all 0.3s ease; text-decoration: none;
+        }
+        .sidebar-item:hover { background-color: rgba(240,253,244,.8); color: #15803d; transform: translateX(4px); }
+        .sidebar-item.active { background-color: #16a34a; color: #fff; box-shadow: 0 10px 20px -3px rgba(22,163,74,.4); transform: translateX(8px); }
+        .sidebar-item svg { width: 1.25rem; height: 1.25rem; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-gray-900 overflow-hidden">
+    <div class="flex h-screen">
+        <aside class="w-72 bg-white border-r border-gray-100 flex flex-col hidden lg:flex z-20">
+            <div class="p-8">
+                <div class="flex items-center gap-3 text-green-600">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-green-100">🌱</div>
+                    <div>
+                        <span class="font-extrabold text-xl tracking-tight block text-gray-800">CropIQ</span>
+                        <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-green-600/60">Intelligence</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1 px-6 flex flex-col gap-10 overflow-y-auto text-sm">
+                <div>
+                    <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Core Insights</p>
+                    <nav class="space-y-1.5">
+                        <a href="admin.html" class="sidebar-item"><span class="font-medium">Dashboard</span></a>
+                    </nav>
+                </div>
+                <div>
+                    <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Operations</p>
+                    <nav class="space-y-1.5">
+                        <a href="users.html" class="sidebar-item"><span class="font-medium">Farmers</span></a>
+                        <a href="articles.html" class="sidebar-item"><span class="font-medium">Knowledge</span></a>
+                        <a href="crops.html" class="sidebar-item active"><span class="font-bold">Crops</span></a>
+                    </nav>
+                </div>
+                <div>
+                    <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Platform</p>
+                    <nav class="space-y-1.5">
+                        <a href="settings.html" class="sidebar-item"><span class="font-medium">Settings</span></a>
+                    </nav>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <header class="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-8 z-10">
+                <h2 class="text-xl font-bold text-gray-800">Crop Management</h2>
+                <div id="connection-status" class="text-xs px-3 py-1 rounded-full bg-orange-50 text-orange-600 font-medium">Connecting...</div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-8">
+                <div class="bg-white border border-gray-100 rounded-2xl p-6 max-w-5xl">
+                    <h3 class="font-bold text-gray-800">Add Crop For Farmers</h3>
+                    <p class="text-xs text-gray-500 mt-1 mb-5">New crop images are uploaded to a storage bucket and linked in the `crops` table.</p>
+
+                    <form id="add-crop-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input id="crop-name" required type="text" placeholder="Name (e.g. maize)" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-full-name" required type="text" placeholder="Full name" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-category" required type="text" placeholder="Category (e.g. Cereal)" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-image-file" type="file" accept="image/*" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white">
+                        <textarea id="crop-short-description" rows="2" placeholder="Short description" class="md:col-span-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"></textarea>
+                        <textarea id="crop-description" rows="3" placeholder="Description" class="md:col-span-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"></textarea>
+                        <input id="crop-temp-min" type="number" step="0.1" placeholder="Temp Min (C)" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-temp-max" type="number" step="0.1" placeholder="Temp Max (C)" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-rainfall-min" type="number" placeholder="Rainfall Min (mm)" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-rainfall-max" type="number" placeholder="Rainfall Max (mm)" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-humidity-min" type="number" placeholder="Humidity Min (%)" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-humidity-max" type="number" placeholder="Humidity Max (%)" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-soil-type" type="text" placeholder="Soil type" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-water-needs" type="text" placeholder="Water needs" class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-growing-months" type="text" placeholder="Growing months (e.g. Nov-Feb)" class="md:col-span-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <input id="crop-common-diseases" type="text" placeholder="Common diseases (comma-separated)" class="md:col-span-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                        <textarea id="crop-management-practices" rows="2" placeholder="Management practices" class="md:col-span-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"></textarea>
+                        <div class="md:col-span-2 flex items-center gap-3">
+                            <button id="add-crop-submit" type="submit" class="px-5 py-2.5 rounded-xl bg-green-600 text-white text-sm font-bold hover:bg-green-700 disabled:opacity-60">Save Crop</button>
+                            <p id="add-crop-status" class="text-xs text-gray-500"></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://frcbiyxewkumgawpfsgo.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_Zr2cDjHGalkdXoAdaXbTHw_S_fyxX0r';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const CROP_IMAGE_BUCKETS = ['crop-images', 'crops', 'profile_pictures'];
+
+        const getNumberOrNull = (value) => {
+            if (value === '' || value === null || value === undefined) return null;
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+        };
+
+        async function uploadCropImage(file, cropName) {
+            if (!file) return { image_path: null, image_url: null };
+            const safeName = (cropName || 'crop').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            const extension = (file.name.split('.').pop() || 'jpg').toLowerCase();
+            const filePath = `crops/${safeName || 'crop'}-${Date.now()}.${extension}`;
+            let lastError = null;
+
+            for (const bucket of CROP_IMAGE_BUCKETS) {
+                const { error } = await supabaseClient.storage.from(bucket).upload(filePath, file, {
+                    upsert: false, cacheControl: '3600', contentType: file.type || 'image/jpeg'
+                });
+                if (!error) {
+                    const { data } = supabaseClient.storage.from(bucket).getPublicUrl(filePath);
+                    return { image_path: filePath, image_url: data.publicUrl };
+                }
+                lastError = error;
+                if (!(error.message || '').toLowerCase().includes('bucket not found')) break;
+            }
+            throw lastError || new Error('Failed to upload crop image');
+        }
+
+        async function createCropFromAdmin(form) {
+            const name = document.getElementById('crop-name').value.trim();
+            const fullName = document.getElementById('crop-full-name').value.trim();
+            const category = document.getElementById('crop-category').value.trim();
+            const imageFile = document.getElementById('crop-image-file').files[0];
+            if (!name || !fullName || !category) throw new Error('Name, full name, and category are required');
+
+            const { data: maxCrop, error: maxErr } = await supabaseClient.from('crops').select('id').order('id', { ascending: false }).limit(1).maybeSingle();
+            if (maxErr) throw maxErr;
+            const nextId = (maxCrop?.id || 0) + 1;
+
+            const uploadedImage = await uploadCropImage(imageFile, name);
+            const diseasesInput = document.getElementById('crop-common-diseases').value.trim();
+            const commonDiseases = diseasesInput ? diseasesInput.split(',').map(s => s.trim()).filter(Boolean) : null;
+
+            const payload = {
+                id: nextId,
+                name,
+                full_name: fullName,
+                category,
+                short_description: document.getElementById('crop-short-description').value.trim() || null,
+                description: document.getElementById('crop-description').value.trim() || null,
+                temp_range_min: getNumberOrNull(document.getElementById('crop-temp-min').value),
+                temp_range_max: getNumberOrNull(document.getElementById('crop-temp-max').value),
+                rainfall_min: getNumberOrNull(document.getElementById('crop-rainfall-min').value),
+                rainfall_max: getNumberOrNull(document.getElementById('crop-rainfall-max').value),
+                humidity_min: getNumberOrNull(document.getElementById('crop-humidity-min').value),
+                humidity_max: getNumberOrNull(document.getElementById('crop-humidity-max').value),
+                soil_type: document.getElementById('crop-soil-type').value.trim() || null,
+                water_needs: document.getElementById('crop-water-needs').value.trim() || null,
+                growing_months: document.getElementById('crop-growing-months').value.trim() || null,
+                common_diseases: commonDiseases,
+                management_practices: document.getElementById('crop-management-practices').value.trim() || null,
+                image_path: uploadedImage.image_path,
+                image_url: uploadedImage.image_url
+            };
+
+            const { error: insertErr } = await supabaseClient.from('crops').insert(payload);
+            if (insertErr) throw insertErr;
+            form.reset();
+        }
+
+        async function init() {
+            const statusEl = document.getElementById('connection-status');
+            const form = document.getElementById('add-crop-form');
+            const status = document.getElementById('add-crop-status');
+            const submitBtn = document.getElementById('add-crop-submit');
+
+            try {
+                const { error } = await supabaseClient.from('crops').select('id').limit(1);
+                if (error) throw error;
+                statusEl.textContent = 'Live Data';
+                statusEl.className = 'text-xs px-3 py-1 rounded-full bg-green-50 text-green-600 font-medium';
+            } catch (e) {
+                statusEl.textContent = 'Offline';
+                statusEl.className = 'text-xs px-3 py-1 rounded-full bg-red-50 text-red-600 font-medium';
+            }
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                submitBtn.disabled = true;
+                status.textContent = 'Saving crop...';
+                status.className = 'text-xs text-gray-500';
+                try {
+                    await createCropFromAdmin(form);
+                    status.textContent = 'Crop saved successfully.';
+                    status.className = 'text-xs text-green-600 font-semibold';
+                } catch (error) {
+                    status.textContent = `Failed: ${error.message || 'Could not save crop'}`;
+                    status.className = 'text-xs text-red-600 font-semibold';
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
