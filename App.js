@@ -18,10 +18,10 @@ import {
   saveCropRecommendation, getCropRecommendations, getLearningProgress,
   completeModule, updateSelectedCrops, getAllCrops, updateLearningProgress,
   getEducationalModules, getModuleParagraphs, uploadProfilePictureToStorage,
-  updateUserProfile,
+  testSupabaseConnection,
 } from './database.js';
 import styles from './Styles.js';
-import { base } from './supabase.js';
+import { supabase } from './supabase.js';
 
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -41,6 +41,9 @@ export default function AppRoot() {
 
   useEffect(() => {
     checkUser();
+    // Run connectivity test
+    testSupabaseConnection();
+    
     const subscription = onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);
@@ -491,23 +494,35 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
 
   const calculateMonthlyWeather = (data, dailyTimes) => {
     const monthly = {};
-    for (let m = 1; m <= 12; m++) monthly[m] = { temps: [], rainfall: [] };
+    const rainfallByYearMonth = {};
+    for (let m = 1; m <= 12; m++) monthly[m] = { temps: [], humidity: [] };
     if (dailyTimes?.length) {
       const temps = data.daily.temperature_2m_mean || [];
       const precip = data.daily.precipitation_sum || [];
+      const humidity = data.daily.relative_humidity_2m_mean || [];
       dailyTimes.forEach((d, i) => {
-        const m = new Date(d).getMonth() + 1;
+        const date = new Date(d);
+        const m = date.getMonth() + 1;
+        const y = date.getFullYear();
+        const ymKey = `${y}-${m}`;
         if (temps[i] !== null) monthly[m].temps.push(temps[i]);
-        if (precip[i] !== null) monthly[m].rainfall.push(precip[i]);
+        if (humidity[i] !== null) monthly[m].humidity.push(humidity[i]);
+        if (precip[i] !== null) {
+          if (!rainfallByYearMonth[ymKey]) rainfallByYearMonth[ymKey] = { month: m, total: 0 };
+          rainfallByYearMonth[ymKey].total += precip[i];
+        }
       });
     }
     const averages = {};
     for (let m = 1; m <= 12; m++) {
       const d = monthly[m];
+      const monthRainTotals = Object.values(rainfallByYearMonth)
+        .filter(item => item.month === m)
+        .map(item => item.total);
       averages[m] = {
         temperature: d.temps.length ? Math.round(d.temps.reduce((a, b) => a + b, 0) / d.temps.length) : 0,
-        rainfall: d.rainfall.length ? Math.round(d.rainfall.reduce((a, b) => a + b, 0)) : 0,
-        humidity: 65,
+        rainfall: monthRainTotals.length ? Math.round(monthRainTotals.reduce((a, b) => a + b, 0) / monthRainTotals.length) : 0,
+        humidity: d.humidity.length ? Math.round(d.humidity.reduce((a, b) => a + b, 0) / d.humidity.length) : 0,
       };
     }
     return averages;
@@ -670,16 +685,27 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
   const handleSaveInlineProfile = async () => {
     if (!user) { alert('Please log in'); return; }
     setIsSavingProfile(true);
+    console.log('--- CROP-IQ-DEBUG: STARTING PROFILE SAVE ---');
     try {
       let pictureUrl = userProfile?.profile_picture_url || null;
       
       // If user selected a new local image, upload it first
-      if (editProfilePicture && (editProfilePicture.startsWith('file://') || editProfilePicture.startsWith('content://'))) {
-        pictureUrl = await uploadProfilePictureToStorage(editProfilePicture, user);
-      } else if (editProfilePicture?.startsWith('http')) {
+      const isRemoteImage = typeof editProfilePicture === 'string' && editProfilePicture.startsWith('http');
+      if (editProfilePicture && !isRemoteImage) {
+        console.log('Attempting to upload new profile picture:', editProfilePicture);
+        try {
+          pictureUrl = await uploadProfilePictureToStorage(editProfilePicture, user);
+          console.log('Profile picture uploaded successfully:', pictureUrl);
+        } catch (uploadError) {
+          console.error('FAILED to upload profile picture:', uploadError);
+          alert('Failed to upload image. Saving profile without updating picture.');
+          // Continue with profile save even if image fails
+        }
+      } else if (isRemoteImage) {
         pictureUrl = editProfilePicture;
       }
 
+      console.log('Attempting to upsert user profile data...');
       await upsertUserProfile({
         full_name: editFullName || undefined, 
         province: editProvince || undefined,
@@ -687,18 +713,20 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
         primary_crops: editPrimaryCrops ? editPrimaryCrops.split(',').map(s => s.trim()).filter(Boolean) : undefined,
         farm_size: editFarmSize || undefined, 
         soil_type: editSoilType || undefined,
-        profile_picture_url: pictureUrl || undefined,
+        profile_picture_url: pictureUrl || null,
       }, user);
 
+      console.log('Profile data saved to database. Refreshing local state...');
       const updatedProfile = await getUserProfile();
       setUserProfile(updatedProfile);
       setIsEditing(false);
       alert('Profile saved successfully!');
     } catch (e) {
-      console.error('Error saving profile:', e);
-      alert('Failed to save profile. Please try again.');
+      console.error('FATAL Error saving profile:', e);
+      alert('Failed to save profile: ' + (e.message || 'Unknown network error'));
     } finally {
       setIsSavingProfile(false);
+      console.log('--- CROP-IQ-DEBUG: PROFILE SAVE PROCESS COMPLETE ---');
     }
   };
 
@@ -765,7 +793,108 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
 
   // ── Pages ─────────────────────────────────────────────────────
 
-  const HomePage = () => (
+  const WeatherLineChart = ({ icon, title, data, color, unit, summaryItems }) => {
+    const chartHeight = 110;
+    const chartWidth = 296;
+    const stepX = chartWidth / Math.max(data.length - 1, 1);
+    const minValue = Math.min(...data.map(item => item.value));
+    const maxValue = Math.max(...data.map(item => item.value));
+    const range = Math.max(maxValue - minValue, 1);
+    const yTickCount = 5;
+    const yTicks = Array.from({ length: yTickCount }, (_, index) => {
+      const ratio = (yTickCount - 1 - index) / (yTickCount - 1);
+      return Math.round(minValue + (range * ratio));
+    });
+
+    const points = data.map((item, index) => {
+      const x = index * stepX;
+      const y = chartHeight - ((item.value - minValue) / range) * chartHeight;
+      return { ...item, x, y };
+    });
+
+    return (
+      <View style={styles.temperatureTrendsCard}>
+        <Text style={styles.cardTitle}>{icon} {title}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={[styles.lineGraphFrame, { width: chartWidth + 92 }]}>
+            <View style={styles.lineGraphContentRow}>
+              <View style={[styles.lineGraphYAxis, { height: chartHeight }]}>
+                {yTicks.map((tick, index) => (
+                  <Text key={`${title}-tick-${index}`} style={styles.lineGraphYAxisLabel}>{`${tick}${unit}`}</Text>
+                ))}
+              </View>
+
+              <View style={[styles.lineGraphMainArea, { width: chartWidth }]}>
+                <View style={styles.lineGraphGrid}>
+                  {yTicks.map((_, index) => <View key={`${title}-grid-${index}`} style={styles.lineGraphGridLine} />)}
+                </View>
+
+                <View style={[styles.lineGraphPlotArea, { height: chartHeight, width: chartWidth }]}>
+                  {points.map((point, index) => {
+                    if (index === points.length - 1) return null;
+                    const next = points[index + 1];
+                    const deltaX = next.x - point.x;
+                    const deltaY = next.y - point.y;
+                    const length = Math.sqrt((deltaX ** 2) + (deltaY ** 2));
+                    const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+                    const midX = (point.x + next.x) / 2;
+                    const midY = (point.y + next.y) / 2;
+
+                    return (
+                      <View
+                        key={`line-${point.label}`}
+                        style={[
+                          styles.lineGraphSegment,
+                          {
+                            left: midX - (length / 2),
+                            top: midY - 1,
+                            width: length,
+                            backgroundColor: color,
+                            transform: [{ rotate: `${angle}deg` }],
+                          },
+                        ]}
+                      />
+                    );
+                  })}
+
+                  {points.map(point => (
+                    <View key={`point-${point.label}`} style={[styles.lineGraphPoint, { left: point.x - 4, top: point.y - 4, borderColor: color }]} />
+                  ))}
+                </View>
+
+                <View style={styles.lineGraphLabelsRow}>
+                  {data.map(item => (
+                    <Text key={item.label} style={styles.lineGraphLabel}>{item.label}</Text>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={styles.trendDetails}>
+          {summaryItems.map(item => (
+            <View key={item.label} style={styles.trendItem}>
+              <Text style={styles.trendLabel}>{item.label}</Text>
+              <Text style={styles.trendValue}>{`${item.value}${item.withUnit === false ? '' : unit}`}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  const HomePage = () => {
+    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlySeries = monthLabels.map((label, index) => ({
+      label,
+      month: index + 1,
+      temperature: monthlyWeatherData[index + 1]?.temperature ?? weatherData?.temperature?.avg ?? 0,
+      rainfall: monthlyWeatherData[index + 1]?.rainfall ?? 0,
+      humidity: monthlyWeatherData[index + 1]?.humidity ?? weatherData?.humidity ?? 0,
+    }));
+
+    return (
     <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView style={styles.container}>
 
@@ -812,18 +941,40 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
           {error && (<View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text><TouchableOpacity style={styles.retryButton} onPress={() => selectedLocationData && fetchWeatherData(selectedLocationData)}><Text style={styles.retryButtonText}>Retry</Text></TouchableOpacity></View>)}
           {weatherData && !isLoading && (
             <View>
-              {[
-                { title: '🌡️ Temperature Range', items: [{ label: 'Average', value: `${weatherData.temperature.avg}°C` }, { label: 'Average Min', value: `${weatherData.temperature.min}°C` }, { label: 'Average Max', value: `${weatherData.temperature.max}°C` }] },
-                { title: '💧 Rainfall Pattern', items: [{ label: 'Total', value: `${weatherData.rainfall.annual}mm` }, { label: 'Pattern', value: weatherData.rainfall.pattern }] },
-                { title: '💨 Humidity Levels', items: [{ label: 'Average', value: `${weatherData.humidity}%` }, { label: 'Condition', value: weatherData.humidity > 70 ? 'Humid' : weatherData.humidity > 50 ? 'Moderate' : 'Dry' }] },
-              ].map(card => (
-                <View key={card.title} style={styles.temperatureTrendsCard}>
-                  <Text style={styles.cardTitle}>{card.title}</Text>
-                  <View style={styles.trendDetails}>
-                    {card.items.map(item => (<View key={item.label} style={styles.trendItem}><Text style={styles.trendLabel}>{item.label}</Text><Text style={styles.trendValue}>{item.value}</Text></View>))}
-                  </View>
-                </View>
-              ))}
+              <WeatherLineChart
+                icon="🌡️"
+                title="Temperature Trend"
+                data={monthlySeries.map(item => ({ label: item.label, value: item.temperature }))}
+                color="#ef4444"
+                unit="°C"
+                summaryItems={[
+                  { label: 'Average', value: weatherData.temperature.avg },
+                  { label: 'Min', value: weatherData.temperature.min },
+                  { label: 'Max', value: weatherData.temperature.max },
+                ]}
+              />
+              <WeatherLineChart
+                icon="💧"
+                title="Rainfall Trend"
+                data={monthlySeries.map(item => ({ label: item.label, value: item.rainfall }))}
+                color="#3b82f6"
+                unit="mm"
+                summaryItems={[
+                  { label: 'Annual Total', value: weatherData.rainfall.annual },
+                  { label: 'Pattern', value: weatherData.rainfall.pattern, withUnit: false },
+                ]}
+              />
+              <WeatherLineChart
+                icon="💨"
+                title="Humidity Trend"
+                data={monthlySeries.map(item => ({ label: item.label, value: item.humidity }))}
+                color="#14b8a6"
+                unit="%"
+                summaryItems={[
+                  { label: 'Average', value: weatherData.humidity },
+                  { label: 'Condition', value: weatherData.humidity > 70 ? 'Humid' : weatherData.humidity > 50 ? 'Moderate' : 'Dry', withUnit: false },
+                ]}
+              />
             </View>
           )}
           {!weatherData && !isLoading && !error && (
@@ -835,7 +986,8 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
         </View>
       </ScrollView>
     </Animated.View>
-  );
+    );
+  };
 
   const RecommendationsPage = () => {
     const [isUpdatingCrop, setIsUpdatingCrop] = useState(null);
@@ -905,26 +1057,41 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
             </View>
           ) : (
             <View style={styles.section}>
-              <View style={{ marginBottom: 20, paddingHorizontal: 4 }}>
-                <Text style={{ fontSize: 14, fontWeight: '600', color: '#6b7280', marginBottom: 10 }}>Select a Month to View Best Crops</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16 }}>
+              <View style={styles.recommendationControlsCard}>
+                <Text style={styles.recommendationControlsTitle}>Select a Month to View Best Crops</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recommendationMonthScroll} contentContainerStyle={styles.recommendationMonthScrollContent}>
                   {months.map(month => (
-                    <TouchableOpacity key={month.id} style={{ paddingHorizontal: 14, paddingVertical: 8, marginRight: 8, borderRadius: 20, backgroundColor: selectedMonth === month.id ? '#16a34a' : '#f3f4f6', borderWidth: 1, borderColor: selectedMonth === month.id ? '#16a34a' : '#e5e7eb' }} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSelectedMonth(month.id); }}>
-                      <Text style={{ fontSize: 12, fontWeight: selectedMonth === month.id ? '600' : '500', color: selectedMonth === month.id ? '#ffffff' : '#374151' }}>{month.name.substring(0, 3)}</Text>
+                    <TouchableOpacity
+                      key={month.id}
+                      style={[styles.recommendationMonthChip, selectedMonth === month.id && styles.recommendationMonthChipActive]}
+                      onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSelectedMonth(month.id); }}
+                    >
+                      <Text style={[styles.recommendationMonthChipText, selectedMonth === month.id && styles.recommendationMonthChipTextActive]}>
+                        {month.name.substring(0, 3)}
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
               </View>
 
-              <View style={{ marginBottom: 16, paddingHorizontal: 4 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#374151', marginBottom: 8 }}>Recommended Crops for {months.find(m => m.id === selectedMonth)?.name}</Text>
-                <Text style={{ fontSize: 13, color: '#6b7280' }}>{selectedMonth >= 11 || selectedMonth <= 4 ? 'Rainy Season' : 'Dry Season'} — Best crops to plant this month</Text>
+              <View style={styles.recommendationSummaryCard}>
+                <View style={styles.recommendationSummaryHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.recommendationSummaryTitle}>Recommended Crops for {months.find(m => m.id === selectedMonth)?.name}</Text>
+                    <Text style={styles.recommendationSummarySubtitle}>
+                      {selectedMonth >= 11 || selectedMonth <= 4 ? 'Rainy Season' : 'Dry Season'} - Best crops to plant this month
+                    </Text>
+                  </View>
+                  <View style={styles.recommendationSummaryBadge}>
+                    <Text style={styles.recommendationSummaryBadgeText}>{selectedCrops.length} Selected</Text>
+                  </View>
+                </View>
                 {monthlyWeatherData[selectedMonth] && (
-                  <View style={{ marginTop: 10, padding: 10, backgroundColor: '#f0fdf4', borderRadius: 8, borderLeftWidth: 3, borderLeftColor: '#16a34a' }}>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#166534', marginBottom: 6 }}>Historical Average for {months.find(m => m.id === selectedMonth)?.name}:</Text>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ fontSize: 12, color: '#166534' }}>🌡️ {monthlyWeatherData[selectedMonth].temperature}°C</Text>
-                      <Text style={{ fontSize: 12, color: '#166534' }}>💧 {monthlyWeatherData[selectedMonth].rainfall}mm</Text>
+                  <View style={styles.recommendationWeatherStrip}>
+                    <Text style={styles.recommendationWeatherStripTitle}>Historical Average for {months.find(m => m.id === selectedMonth)?.name}:</Text>
+                    <View style={styles.recommendationWeatherValuesRow}>
+                      <Text style={styles.recommendationWeatherValue}>🌡️ {monthlyWeatherData[selectedMonth].temperature}°C</Text>
+                      <Text style={styles.recommendationWeatherValue}>💧 {monthlyWeatherData[selectedMonth].rainfall}mm</Text>
                     </View>
                   </View>
                 )}
@@ -979,13 +1146,21 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
             <Modal visible={true} animationType="slide">
               <SafeAreaView style={styles.modalFull}>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalHeaderTitle}>{selectedCrop.fullName}</Text>
-                  <TouchableOpacity onPress={() => setSelectedCrop(null)}><Text style={styles.closeIcon}>✕</Text></TouchableOpacity>
+                  <View style={styles.modalHeaderTextWrap}>
+                    <Text style={styles.modalHeaderEyebrow}>CROP PROFILE</Text>
+                    <Text style={styles.modalHeaderTitle}>{selectedCrop.fullName}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.modalCloseButton} onPress={() => setSelectedCrop(null)}>
+                    <Text style={styles.closeIcon}>✕</Text>
+                  </TouchableOpacity>
                 </View>
-                <ScrollView style={styles.modalBody}>
+                <ScrollView style={styles.modalBody} contentContainerStyle={styles.modalBodyContent}>
                   <View style={styles.cropDetailImageSection}>
                     {selectedCrop.imageUrl ? <Image source={{ uri: selectedCrop.imageUrl }} style={styles.cropDetailImage} resizeMode="cover" /> : typeof selectedCrop.image === 'number' ? <Image source={selectedCrop.image} style={styles.cropDetailImage} resizeMode="cover" /> : selectedCrop.image ? <Text style={styles.cropDetailEmoji}>{selectedCrop.image}</Text> : <Text style={styles.cropDetailEmoji}>🌾</Text>}
-                    <View style={styles.cropCategoryBadge}><Text style={styles.cropCategoryText}>{selectedCrop.category}</Text></View>
+                    <View style={styles.cropHeroBadges}>
+                      <View style={styles.cropCategoryBadge}><Text style={styles.cropCategoryText}>{selectedCrop.category}</Text></View>
+                      <View style={styles.cropSuitabilityChip}><Text style={styles.cropSuitabilityChipText}>{selectedCrop.suitability ? `${selectedCrop.suitability}% Match` : 'Recommended Crop'}</Text></View>
+                    </View>
                   </View>
                   <Text style={styles.cropDetailDescription}>{selectedCrop.description}</Text>
                   <View style={styles.detailSection}><Text style={styles.detailSectionTitle}>🌱 Planting Details</Text><DetailRow label="Planting Depth" value={selectedCrop.plantingDepth} /><DetailRow label="Spacing" value={selectedCrop.spacing} /><DetailRow label="Growing Season" value={selectedCrop.growingSeason} /></View>
@@ -1158,7 +1333,22 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
     );
   };
 
-  const ProfilePage = () => (
+  const handleOpenSelectedCropModule = (cropName) => {
+    const cropMatch = crops.find(c =>
+      c.name?.toLowerCase() === cropName?.toLowerCase() ||
+      c.fullName?.toLowerCase() === cropName?.toLowerCase()
+    );
+
+    setCurrentPage('recommendations');
+    if (cropMatch) {
+      setSelectedCrop(cropMatch);
+    }
+  };
+
+  const ProfilePage = () => {
+    const selectedCropNames = userProfile?.selected_crops || [];
+
+    return (
     <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <View style={styles.profileContainer}>
         {/* Header */}
@@ -1183,7 +1373,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
             <View style={{ flex: 1 }}>
               {isEditing ? (
                 <TextInput
-                  style={[styles.inlineInput, { backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#FFFFFF', borderColor: 'rgba(255, 255, 255, 0.3)', fontWeight: 'bold', fontSize: 20 }]}
+                  style={styles.profileHeaderNameInput}
                   value={editFullName}
                   onChangeText={setEditFullName}
                   placeholder="Your Name"
@@ -1215,6 +1405,85 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
         </View>
 
         <ScrollView style={styles.profileContentScroll} showsVerticalScrollIndicator={false}>
+          {isEditing && (
+            <View style={styles.profileEditNotice}>
+              <View style={styles.profileEditNoticeIcon}>
+                <Ionicons name="create-outline" size={16} color="#166534" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.profileEditNoticeTitle}>Edit Profile Mode</Text>
+                <Text style={styles.profileEditNoticeText}>Update your farm details and tap Save Changes when done.</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Farm Details Card */}
+          <View style={[styles.profileSectionCard, isEditing && styles.profileEditCard]}>
+            <View style={styles.profileSectionHeader}>
+              <Text style={styles.profileSectionTitle}>Farm Details</Text>
+            </View>
+
+            {/* Farm Size */}
+            <View style={[styles.profileDetailItem, styles.profileDetailItemLast]}>
+              <View style={[styles.profileDetailIconCircle, { backgroundColor: '#DCFCE7' }]}>
+                <MaterialCommunityIcons name="leaf" size={20} color="#16a34a" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.profileDetailLabel}>Farm Size</Text>
+                {isEditing ? (
+                  <TextInput
+                    style={styles.inlineInput}
+                    value={editFarmSize}
+                    onChangeText={setEditFarmSize}
+                    placeholder="e.g. 2 hectares"
+                  />
+                ) : (
+                  <Text style={styles.profileDetailValue}>{userProfile?.farm_size || 'Not specified'}</Text>
+                )}
+              </View>
+            </View>
+
+            {/* Soil Type */}
+            <View style={styles.profileDetailItem}>
+              <View style={[styles.profileDetailIconCircle, { backgroundColor: '#FEF3C7' }]}>
+                <MaterialCommunityIcons name="test-tube" size={20} color="#D97706" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.profileDetailLabel}>Soil Type</Text>
+                {isEditing ? (
+                  <TextInput
+                    style={styles.inlineInput}
+                    value={editSoilType}
+                    onChangeText={setEditSoilType}
+                    placeholder="e.g. Clay, Sandy, Loam"
+                  />
+                ) : (
+                  <Text style={styles.profileDetailValue}>{userProfile?.soil_type || 'Not specified'}</Text>
+                )}
+              </View>
+            </View>
+
+            {isEditing && (
+              <View style={styles.profileEditActionsRow}>
+                <TouchableOpacity 
+                  style={styles.profileCancelButton}
+                  onPress={() => setIsEditing(false)}
+                >
+                  <Text style={styles.profileCancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.profileSaveButton}
+                  onPress={handleSaveInlineProfile}
+                  disabled={isSavingProfile}
+                >
+                  {isSavingProfile
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={styles.profileSaveButtonText}>Save Changes</Text>}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
           {/* Current Location Card */}
           <View style={styles.profileSectionCard}>
             <View style={styles.profileSectionHeader}>
@@ -1256,88 +1525,35 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
             </View>
           )}
 
-          {/* Farm Details Card */}
+          {/* Selected Crops */}
           <View style={styles.profileSectionCard}>
             <View style={styles.profileSectionHeader}>
-              <Text style={styles.profileSectionTitle}>Farm Details</Text>
+              <Text style={styles.profileSectionTitle}>Selected Crops</Text>
+              <Text style={styles.selectedCropCountBadge}>{selectedCropNames.length}</Text>
             </View>
 
-            {/* Farm Size */}
-            <View style={styles.profileDetailItem}>
-              <View style={[styles.profileDetailIconCircle, { backgroundColor: '#DCFCE7' }]}>
-                <MaterialCommunityIcons name="leaf" size={20} color="#16a34a" />
+            {selectedCropNames.length > 0 ? (
+              <View style={styles.selectedCropsWrap}>
+                {selectedCropNames.map(cropName => (
+                  <TouchableOpacity
+                    key={cropName}
+                    style={styles.selectedCropChip}
+                    onPress={() => handleOpenSelectedCropModule(cropName)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.selectedCropChipIcon}>
+                      <Ionicons name="leaf-outline" size={14} color="#166534" />
+                    </View>
+                    <Text style={styles.selectedCropChipText}>{cropName}</Text>
+                    <Ionicons name="arrow-forward-circle-outline" size={16} color="#16a34a" />
+                  </TouchableOpacity>
+                ))}
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.profileDetailLabel}>Farm Size</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={styles.inlineInput}
-                    value={editFarmSize}
-                    onChangeText={setEditFarmSize}
-                    placeholder="e.g. 2 hectares"
-                  />
-                ) : (
-                  <Text style={styles.profileDetailValue}>{userProfile?.farm_size || 'Not specified'}</Text>
-                )}
-              </View>
-            </View>
-
-            {/* Soil Type */}
-            <View style={styles.profileDetailItem}>
-              <View style={[styles.profileDetailIconCircle, { backgroundColor: '#FEF3C7' }]}>
-                <MaterialCommunityIcons name="test-tube" size={20} color="#D97706" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.profileDetailLabel}>Soil Type</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={styles.inlineInput}
-                    value={editSoilType}
-                    onChangeText={setEditSoilType}
-                    placeholder="e.g. Clay, Sandy, Loam"
-                  />
-                ) : (
-                  <Text style={styles.profileDetailValue}>{userProfile?.soil_type || 'Not specified'}</Text>
-                )}
-              </View>
-            </View>
-
-            {/* Current Crops */}
-            <View style={[styles.profileDetailItem, styles.profileDetailItemLast]}>
-              <View style={[styles.profileDetailIconCircle, { backgroundColor: '#DBEAFE' }]}>
-                <Ionicons name="leaf-outline" size={20} color="#2563EB" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.profileDetailLabel}>Current Crops</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={styles.inlineInput}
-                    value={editPrimaryCrops}
-                    onChangeText={setEditPrimaryCrops}
-                    placeholder="Maize, Groundnuts, etc."
-                  />
-                ) : (
-                  <Text style={styles.profileDetailValue}>
-                    {userProfile?.primary_crops?.join(', ') || 'Not specified'}
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            {isEditing && (
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
-                <TouchableOpacity 
-                  style={[styles.viewRecommendationsButton, { flex: 1, backgroundColor: '#f3f4f6' }]} 
-                  onPress={() => setIsEditing(false)}
-                >
-                  <Text style={[styles.viewRecommendationsButtonText, { color: '#6b7280' }]}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.viewRecommendationsButton, { flex: 2 }]} 
-                  onPress={handleSaveInlineProfile}
-                  disabled={isSavingProfile}
-                >
-                  {isSavingProfile ? <ActivityIndicator color="#fff" /> : <Text style={styles.viewRecommendationsButtonText}>Save Changes</Text>}
+            ) : (
+              <View style={styles.selectedCropEmptyState}>
+                <Text style={styles.selectedCropEmptyText}>No selected crops yet. Tap below to choose crops and track them here.</Text>
+                <TouchableOpacity style={styles.selectedCropEmptyButton} onPress={handleNavigateToRecommendations}>
+                  <Text style={styles.selectedCropEmptyButtonText}>Choose Crops</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -1372,7 +1588,8 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
         </ScrollView>
       </View>
     </Animated.View>
-  );
+    );
+  };
 
   // ── Main render ───────────────────────────────────────────────
 

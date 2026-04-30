@@ -241,43 +241,101 @@ export const uploadProfilePictureToStorage = async (imageData, userObj = null) =
       throw new Error('Image data is required');
     }
 
-    let blob;
+    let fileData;
     let fileName;
+    let contentType = 'image/jpeg';
 
     // Handle different input types
     if (typeof imageData === 'string') {
-      // It's a URI/path - fetch and convert to blob
-      const response = await fetch(imageData);
-      blob = await response.blob();
-    } else if (imageData instanceof Blob) {
-      blob = imageData;
+      console.log('Reading local file for upload:', imageData);
+      try {
+        const response = await fetch(imageData);
+        if (!response.ok) {
+          throw new Error(`Failed to read image file: ${response.status}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        fileData = arrayBuffer;
+      } catch (readError) {
+        // Android/Expo can fail to fetch content:// or file:// URIs.
+        // Fallback to XHR blob reader for local device URIs.
+        console.warn('Primary file read failed, trying XHR fallback:', readError?.message || readError);
+        const blob = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.onload = function onLoad() { resolve(xhr.response); };
+          xhr.onerror = function onError() { reject(new Error('XHR fallback failed to read local image URI')); };
+          xhr.responseType = 'blob';
+          xhr.open('GET', imageData, true);
+          xhr.send(null);
+        });
+        fileData = blob;
+      }
+
+      const lowerUri = imageData.toLowerCase();
+      if (lowerUri.endsWith('.png')) contentType = 'image/png';
+      else if (lowerUri.endsWith('.webp')) contentType = 'image/webp';
+      else if (lowerUri.endsWith('.heic')) contentType = 'image/heic';
+      else if (lowerUri.endsWith('.jpg') || lowerUri.endsWith('.jpeg')) contentType = 'image/jpeg';
+    } else if (imageData instanceof Blob || imageData instanceof ArrayBuffer) {
+      fileData = imageData;
     } else {
       throw new Error('Invalid image data type');
     }
 
     // Generate unique filename
-    fileName = `${user.id}_${Date.now()}.jpg`;
+    const extensionMap = {
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/heic': 'heic',
+      'image/jpeg': 'jpg',
+    };
+    const fileExtension = extensionMap[contentType] || 'jpg';
+    fileName = `${user.id}/${Date.now()}.${fileExtension}`;
 
-    // Upload to Supabase storage bucket
-    const { data, error } = await supabase.storage
-      .from('profile_pictures')
-      .upload(fileName, blob, {
-        cacheControl: '3600',
-        upsert: true, // Replace if file exists
-      });
+    // Upload to Supabase storage bucket (with fallbacks for older setups)
+    console.log('--- CROP-IQ-DEBUG: ATTEMPTING STORAGE UPLOAD ---');
+    const candidateBuckets = ['profile_pictures', 'crop-images', 'profile-pictures'];
+    let uploadedBucket = null;
+    let lastError = null;
 
-    if (error) {
-      throw error;
+    for (const bucket of candidateBuckets) {
+      console.log(`Uploading to Supabase storage bucket: ${bucket}`);
+      const { error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, fileData, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType
+        });
+
+      if (!error) {
+        uploadedBucket = bucket;
+        break;
+      }
+
+      lastError = error;
+      console.error(`Supabase storage upload error (${bucket}):`, error);
+
+      // Try the next bucket only when this bucket does not exist
+      if (!(error?.message || '').toLowerCase().includes('bucket not found')) {
+        throw error;
+      }
+    }
+
+    if (!uploadedBucket) {
+      throw new Error(
+        `Storage bucket not found. Create one of these buckets in Supabase Storage: ${candidateBuckets.join(', ')}. Last error: ${lastError?.message || 'unknown'}`
+      );
     }
 
     // Get public URL
     const { data: publicData } = supabase.storage
-      .from('profile_pictures')
+      .from(uploadedBucket)
       .getPublicUrl(fileName);
 
+    console.log('Upload successful, public URL:', publicData.publicUrl);
     return publicData.publicUrl;
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
+    console.error('Detailed error in uploadProfilePictureToStorage:', error);
     throw error;
   }
 };
@@ -996,6 +1054,33 @@ export const batchCreateFarms = async (farmsData) => {
   }
 };
 
+/**
+ * Test the connection to Supabase
+ * @returns {Promise<boolean>} True if connection is successful
+ */
+export const testSupabaseConnection = async () => {
+  try {
+    console.log('--- CROP-IQ-DEBUG: TESTING SUPABASE CONNECTION ---');
+    console.log('Supabase URL:', supabase.supabaseUrl);
+    
+    const { data, error } = await supabase
+      .from('educational_modules')
+      .select('id')
+      .limit(1);
+      
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+      return false;
+    }
+    
+    console.log('Supabase connection test SUCCESSFUL. Data received:', data);
+    return true;
+  } catch (error) {
+    console.error('Supabase connection test FATAL error:', error);
+    return false;
+  }
+};
+
 // ============================================
 // EXPORTS
 // ============================================
@@ -1044,4 +1129,5 @@ export default {
   getAllCrops,
   getCropById,
   getCropsByCategory,
+  testSupabaseConnection,
 };
