@@ -1,229 +1,358 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CropIQ Admin | Articles</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(229, 231, 235, 0.5);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            overflow: hidden;
         }
-        .glass-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+
+        /* ── Sidebar ── */
+        #sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: #ffffff;
+            border-right: 1px solid #f1f5f9;
+            overflow-y: auto;
         }
-        
-        /* Redesigned Sidebar - Standard CSS for CDN Compatibility */
-        .sidebar-item {
+
+        .sidebar-brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #4ade80, #16a34a);
+            border-radius: 14px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.25);
+        }
+
+        .sidebar-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            padding: 0 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-link {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.75rem 1rem;
+            padding: 0.65rem 1rem;
             border-radius: 0.75rem;
-            color: #94a3b8; /* text-gray-400 */
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
+            color: #94a3b8;
             text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
         }
-        .sidebar-item:hover {
-            background-color: rgba(240, 253, 244, 0.8); /* bg-green-50/80 */
-            color: #15803d; /* text-green-700 */
+
+        .sidebar-link:hover {
+            background-color: rgba(240, 253, 244, 0.9);
+            color: #15803d;
             transform: translateX(4px);
         }
-        .sidebar-item.active {
-            background-color: #16a34a; /* bg-green-600 */
-            color: #ffffff;
-            box-shadow: 0 10px 20px -3px rgba(22, 163, 74, 0.4);
+
+        .sidebar-link.active {
+            background-color: #16a34a;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.35);
             transform: translateX(8px);
         }
-        .sidebar-item svg {
-            width: 1.25rem;
-            height: 1.25rem;
-            transition: transform 0.3s ease;
+
+        /* ── Scrollable main content ── */
+        #main-content {
+            overflow-y: auto;
+            flex: 1;
         }
-        .sidebar-item.active svg {
-            color: #ffffff;
+
+        /* ── Article cards ── */
+        .article-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+            position: relative;
+            overflow: hidden;
         }
-        .sidebar-item:hover svg {
-            transform: scale(1.1);
+
+        .article-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 30px -5px rgba(0, 0, 0, 0.06);
         }
-        
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
+
+        .article-card .card-actions {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: all 0.2s ease;
         }
-        .animate-nav { animation: slideInRight 0.5s ease-out forwards; }
-        
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+
+        .article-card:hover .card-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .article-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 1rem;
+            background-color: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.25s;
+        }
+
+        .article-card:hover .article-icon {
+            background-color: #f0fdf4;
+            transform: scale(1.08);
+        }
+
+        /* ── Modal ── */
+        .modal-green .modal-header {
+            background: #16a34a;
+            color: #fff;
+            border: none;
+        }
+
+        .modal-green .modal-content {
+            border-radius: 1.25rem;
+            overflow: hidden;
+            border: none;
+        }
+
+        .modal-green .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .content-block {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1rem;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .content-block .block-delete {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+        }
+
+        .content-block:hover .block-delete {
+            opacity: 1;
+        }
+
+        .content-block .block-delete:hover {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .form-control:focus,
+        .form-control:focus {
+            border-radius: 0.75rem;
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+        }
+
+        .form-control {
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            border-color: #e2e8f0;
+        }
+
+        .dashed-zone {
+            min-height: 80px;
+            background: rgba(248, 250, 252, 0.5);
+            border: 2px dashed #e2e8f0;
+            border-radius: 1.25rem;
+            padding: 1rem;
+        }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-gray-900 overflow-hidden">
-    <div class="flex h-screen">
-        <!-- Sidebar -->
-        <aside class="w-72 bg-white border-r border-gray-100 flex flex-col hidden lg:flex z-20">
-            <div class="p-8">
-                <div class="flex items-center gap-3 text-green-600 group cursor-pointer">
-                    <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-green-100 transform transition-transform group-hover:rotate-12">🌱</div>
+
+<body>
+    <div class="d-flex" style="height: 100vh;">
+
+        <!-- ── Sidebar ── -->
+        <aside id="sidebar" class="d-none d-lg-flex flex-column">
+            <!-- Brand -->
+            <div class="p-4 pb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="sidebar-brand-icon">🌱</div>
                     <div>
-                        <span class="font-extrabold text-xl tracking-tight block text-gray-800">CropIQ</span>
-                        <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-green-600/60">Intelligence</span>
+                        <div class="fw-bold fs-6 text-dark lh-1">CropIQ</div>
+                        <div class="text-uppercase text-success opacity-75"
+                            style="font-size:10px; letter-spacing:0.18em; font-weight:700;">Intelligence</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="flex-1 px-6 flex flex-col gap-10 overflow-y-auto text-sm">
-                <!-- Group 1 -->
-                <div class="animate-nav" style="animation-delay: 0.1s">
-                    <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Core Insights</p>
-                    <nav class="space-y-1.5">
-                        <a href="admin.html" class="sidebar-item group">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                            <span class="font-medium">Dashboard</span>
+
+            <!-- Nav -->
+            <div class="flex-grow-1 px-3 d-flex flex-column gap-4 overflow-auto pb-4" style="font-size:0.875rem;">
+                <div>
+                    <p class="sidebar-section-label">Core Insights</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="admin.html" class="sidebar-link">
+                            <i class="bi bi-grid-1x2"></i> Dashboard
                         </a>
                     </nav>
                 </div>
-
-                <!-- Group 2 -->
-                <div class="animate-nav" style="animation-delay: 0.2s">
-                    <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Operations</p>
-                    <nav class="space-y-1.5">
-                        <a href="users.html" class="sidebar-item group">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                            <span class="font-medium">Farmers</span>
+                <div>
+                    <p class="sidebar-section-label">Operations</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="users.html" class="sidebar-link">
+                            <i class="bi bi-people"></i> Farmers
                         </a>
-                        <a href="articles.html" class="sidebar-item active group">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <span class="font-bold">Knowledge</span>
+                        <a href="articles.html" class="sidebar-link active">
+                            <i class="bi bi-journal-richtext"></i> Knowledge
                         </a>
-                        <a href="crops.html" class="sidebar-item group">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20h10M12 4c3.314 0 6 2.686 6 6 0 4.5-6 10-6 10S6 14.5 6 10c0-3.314 2.686-6 6-6z"></path></svg>
-                            <span class="font-medium">Crops</span>
+                        <a href="crops.html" class="sidebar-link">
+                            <i class="bi bi-flower1"></i> Crops
                         </a>
                     </nav>
                 </div>
-
-                <!-- Group 3 -->
-                <div class="animate-nav" style="animation-delay: 0.3s">
-                    <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Platform</p>
-                    <nav class="space-y-1.5">
-                        <a href="settings.html" class="sidebar-item group">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            <span class="font-medium">Settings</span>
+                <div>
+                    <p class="sidebar-section-label">Platform</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="settings.html" class="sidebar-link">
+                            <i class="bi bi-gear"></i> Settings
                         </a>
                     </nav>
                 </div>
-            </div>
-
-            <!-- Footer Profile -->
-            <div class="p-6 bg-gray-50/50 mt-auto animate-nav" style="animation-delay: 0.4s">
-                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm group cursor-pointer hover:shadow-md transition-all">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-green-600 rounded-2xl flex items-center justify-center font-bold text-white transition-transform group-hover:scale-110 group-hover:rotate-6">AD</div>
-                        <div class="min-w-0">
-                            <p class="text-xs font-extrabold text-gray-800 truncate">Super Admin</p>
-                            <p class="text-[10px] text-gray-400 truncate">online</p>
-                        </div>
-                    </div>
-                </div>
-                <button class="w-full mt-4 py-2 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest hover:text-red-500 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    Logout
-                </button>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <header class="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-8 z-10">
-                <h2 class="text-xl font-bold text-gray-800">Educational Articles</h2>
-                <button onclick="openArticleModal()" class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-green-100 transition-transform active:scale-95">+ New Article</button>
+        <!-- ── Main ── -->
+        <div class="d-flex flex-column flex-grow-1 min-w-0">
+
+            <!-- Header -->
+            <header class="bg-white border-bottom d-flex align-items-center justify-content-between px-4"
+                style="height:64px; border-color:#f1f5f9 !important; z-index:10;">
+                <h2 class="mb-0 fw-bold fs-6 text-dark">Educational Articles</h2>
+                <button onclick="openArticleModal()" class="btn btn-success btn-sm fw-bold px-3"
+                    style="border-radius:0.75rem;">
+                    <i class="bi bi-plus-lg me-1"></i> New Article
+                </button>
             </header>
 
-            <div class="flex-1 overflow-y-auto p-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="articles-grid">
+            <!-- Scrollable body -->
+            <div id="main-content" class="p-4">
+                <div class="row g-4" id="articles-grid">
                     <!-- Cards injected by JS -->
                 </div>
             </div>
-        </main>
-    </div>
+        </div><!-- /main col -->
+    </div><!-- /flex wrapper -->
 
-    <!-- Article Editor Modal -->
-    <div id="modal-backdrop" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-opacity duration-300"></div>
-    <div id="article-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-6 bg-green-600 text-white flex justify-between items-center">
-                <h3 id="modal-title" class="font-bold text-xl text-white">Create New Article</h3>
-                <button onclick="closeArticleModal()" class="p-2 hover:bg-black/10 rounded-xl">✕</button>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto p-6 space-y-6">
-                <!-- Metadata Form -->
-                <form id="article-form" class="space-y-4 pb-6 border-b border-gray-100">
-                    <p class="text-[10px] font-extrabold uppercase text-green-600 tracking-[0.2em]">Basic Information</p>
-                    <input type="hidden" id="article-id">
-                    <div class="grid grid-cols-3 gap-4">
-                        <div>
-                            <label class="text-[10px] text-gray-400 font-bold uppercase">ID</label>
-                            <input type="number" id="f-id" required class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20">
+    <!-- ── Article Editor Modal ── -->
+    <div class="modal fade" id="articleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content modal-green">
+                <div class="modal-header px-4 py-3">
+                    <h5 class="modal-title fw-bold" id="modal-title">Create New Article</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Metadata Form -->
+                    <form id="article-form">
+                        <p class="mb-3 fw-bold text-success text-uppercase" style="font-size:10px; letter-spacing:0.18em;">Basic Information</p>
+                        <input type="hidden" id="article-id">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label mb-1" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">ID</label>
+                                <input type="number" id="f-id" required class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-9">
+                                <label class="form-label mb-1" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Title</label>
+                                <input type="text" id="f-title" required class="form-control form-control-sm">
+                            </div>
                         </div>
-                        <div class="col-span-2">
-                            <label class="text-[10px] text-gray-400 font-bold uppercase">Title</label>
-                            <input type="text" id="f-title" required class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20">
+                        <div class="mb-3">
+                            <label class="form-label mb-1" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Description</label>
+                            <textarea id="f-description" rows="2" class="form-control form-control-sm"></textarea>
                         </div>
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-400 font-bold uppercase">Description</label>
-                        <textarea id="f-description" rows="2" class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20"></textarea>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-[10px] text-gray-400 font-bold uppercase">Duration</label>
-                            <input type="text" id="f-duration" class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label mb-1" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Duration</label>
+                                <input type="text" id="f-duration" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label mb-1" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Icon</label>
+                                <input type="text" id="f-icon" class="form-control form-control-sm">
+                            </div>
                         </div>
-                        <div>
-                            <label class="text-[10px] text-gray-400 font-bold uppercase">Icon</label>
-                            <input type="text" id="f-icon" class="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500/20">
-                        </div>
-                    </div>
-                </form>
+                    </form>
 
-                <!-- Content Blocks Editor -->
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <p class="text-[10px] font-extrabold uppercase text-green-600 tracking-[0.2em]">Article Content</p>
-                        <div class="flex gap-2">
-                            <button onclick="addContentBlock('text')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold border border-blue-100 hover:bg-blue-600 hover:text-white transition-all">+ Add Text</button>
-                            <button onclick="addContentBlock('image')" class="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold border border-purple-100 hover:bg-purple-600 hover:text-white transition-all">+ Add Image</button>
+                    <hr class="my-3" style="border-color:#f1f5f9;">
+
+                    <!-- Content Blocks -->
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <p class="mb-0 fw-bold text-success text-uppercase" style="font-size:10px; letter-spacing:0.18em;">Article Content</p>
+                        <div class="d-flex gap-2">
+                            <button onclick="addContentBlock('text')" class="btn btn-sm fw-bold" style="background:#eff6ff; color:#2563eb; font-size:10px; border-radius:0.5rem; border:1px solid #dbeafe;">+ Add Text</button>
+                            <button onclick="addContentBlock('image')" class="btn btn-sm fw-bold" style="background:#faf5ff; color:#9333ea; font-size:10px; border-radius:0.5rem; border:1px solid #f3e8ff;">+ Add Image</button>
                         </div>
                     </div>
-                    
-                    <div id="content-blocks" class="space-y-3 min-h-[100px] bg-gray-50/50 p-4 rounded-3xl border-2 border-dashed border-gray-100">
+                    <div id="content-blocks" class="dashed-zone d-flex flex-column gap-3">
                         <!-- Blocks injected here -->
                     </div>
                 </div>
-            </div>
-
-            <div class="p-6 border-t border-gray-100 bg-gray-50/30 flex gap-3">
-                <button onclick="closeArticleModal()" class="flex-1 py-3 bg-white border border-gray-200 text-gray-500 font-bold rounded-2xl text-sm transition-all hover:bg-gray-50">Cancel</button>
-                <button onclick="saveArticle()" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-2xl text-sm shadow-xl shadow-green-200 transition-all hover:bg-green-700 active:scale-95">Save Everything</button>
+                <div class="modal-footer px-4 py-3" style="background:#f8fafc; border-color:#f1f5f9;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-4" data-bs-dismiss="modal" style="border-radius:0.75rem;">Cancel</button>
+                    <button onclick="saveArticle()" class="btn btn-success btn-sm fw-bold px-4" style="border-radius:0.75rem;">
+                        <i class="bi bi-floppy me-1"></i> Save Everything
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Bootstrap 5 JS bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         const SUPABASE_URL = 'https://frcbiyxewkumgawpfsgo.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_Zr2cDjHGalkdXoAdaXbTHw_S_fyxX0r';
-        
+
         let supabaseClient;
         try {
             if (typeof supabase === 'undefined') throw new Error('Supabase not loaded');
@@ -232,7 +361,12 @@
 
         let modules = [];
         let progress = [];
-        let currentBlocks = []; // To track paragraphs locally in the modal
+        let currentBlocks = [];
+        let articleModalInstance;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            articleModalInstance = new bootstrap.Modal(document.getElementById('articleModal'));
+        });
 
         async function loadArticles() {
             if (!supabaseClient) return;
@@ -248,30 +382,32 @@
         function renderArticles() {
             const grid = document.getElementById('articles-grid');
             if (modules.length === 0) {
-                grid.innerHTML = `<div class="col-span-full p-12 text-center glass-card rounded-3xl"><p class="text-gray-400">No articles found.</p></div>`;
+                grid.innerHTML = `<div class="col-12"><div class="text-center p-5 bg-white border rounded-4" style="border-color:#f1f5f9 !important;"><p class="text-muted mb-0">No articles found.</p></div></div>`;
                 return;
             }
             grid.innerHTML = modules.map(m => {
                 const completions = progress.filter(p => p.module_id === m.id && p.completed).length;
                 return `
-                    <div class="glass-card rounded-3xl p-6 bg-white flex flex-col relative group overflow-hidden">
-                        <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
-                            <button onclick="openArticleModal(${m.id})" class="p-2 bg-white shadow-xl text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all border border-blue-50">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </button>
-                            <button onclick="deleteArticle(${m.id})" class="p-2 bg-white shadow-xl text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all border border-red-50">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </button>
-                        </div>
-                        <div class="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-2xl mb-4 group-hover:bg-green-50 group-hover:scale-110 transition-all">${m.icon || '📄'}</div>
-                        <h3 class="font-extrabold text-gray-800 mb-1">${m.title}</h3>
-                        <div class="flex items-center gap-2 mb-4">
-                            <span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">${m.duration || 'Short read'}</span>
-                        </div>
-                        <p class="text-xs text-gray-500 flex-1 leading-relaxed line-clamp-3">${m.description || '...'}</p>
-                        <div class="pt-4 mt-4 border-t border-gray-50 flex items-center justify-between">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Activity</span>
-                            <span class="text-xs font-extrabold text-green-600">${completions} users read</span>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="article-card d-flex flex-column h-100">
+                            <div class="card-actions d-flex gap-2">
+                                <button onclick="openArticleModal(${m.id})" class="btn btn-sm border" style="background:#fff; color:#2563eb; border-radius:0.75rem; border-color:#dbeafe !important;">
+                                    <i class="bi bi-pencil" style="font-size:0.75rem;"></i>
+                                </button>
+                                <button onclick="deleteArticle(${m.id})" class="btn btn-sm border" style="background:#fff; color:#dc2626; border-radius:0.75rem; border-color:#fecaca !important;">
+                                    <i class="bi bi-trash" style="font-size:0.75rem;"></i>
+                                </button>
+                            </div>
+                            <div class="article-icon mb-3">${m.icon || '📄'}</div>
+                            <h6 class="fw-bold text-dark mb-1">${m.title}</h6>
+                            <div class="mb-3">
+                                <span class="badge" style="background:#f8fafc; color:#94a3b8; font-size:10px; font-weight:700; border:1px solid #f1f5f9; border-radius:20px;">${m.duration || 'Short read'}</span>
+                            </div>
+                            <p class="text-muted flex-grow-1" style="font-size:0.8rem; line-height:1.6;">${m.description || '...'}</p>
+                            <div class="pt-3 mt-auto border-top d-flex align-items-center justify-content-between" style="border-color:#f8fafc !important;">
+                                <span class="text-muted text-uppercase" style="font-size:10px; font-weight:700; letter-spacing:0.08em;">Activity</span>
+                                <span class="fw-bold text-success" style="font-size:0.8rem;">${completions} users read</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -279,8 +415,6 @@
         }
 
         async function openArticleModal(id = null) {
-            const modal = document.getElementById('article-modal');
-            const backdrop = document.getElementById('modal-backdrop');
             document.getElementById('article-form').reset();
             document.getElementById('article-id').value = '';
             document.getElementById('f-id').disabled = false;
@@ -298,23 +432,20 @@
                 document.getElementById('f-icon').value = article.icon;
                 document.getElementById('modal-title').innerText = 'Edit Content';
 
-                // Fetch paragraphs
                 const { data: paragraphs } = await supabaseClient
                     .from('educational_module_paragraphs')
                     .select('*')
                     .eq('module_id', id)
                     .order('order_index', { ascending: true });
-                
+
                 (paragraphs || []).forEach(p => addContentBlock(p.type, p.paragraph || p.image_url));
             } else {
                 document.getElementById('modal-title').innerText = 'New Knowledge Module';
-                // Suggest next ID
                 const nextId = modules.length > 0 ? Math.max(...modules.map(m => m.id)) + 1 : 1;
                 document.getElementById('f-id').value = nextId;
             }
 
-            modal.classList.remove('hidden');
-            backdrop.classList.remove('hidden');
+            articleModalInstance.show();
         }
 
         function addContentBlock(type, value = '') {
@@ -322,24 +453,21 @@
             const blockId = Date.now() + Math.random();
             const div = document.createElement('div');
             div.id = `block-${blockId}`;
-            div.className = "p-4 bg-white rounded-2xl border border-gray-100 shadow-sm relative group/block";
-            
-            const contentHtml = type === 'text' 
-                ? `<textarea class="w-full bg-transparent text-sm outline-none placeholder-gray-300 resize-none" placeholder="Enter paragraph text..." oninput="updateBlock('${blockId}', this.value)">${value}</textarea>`
-                : `<div class="flex gap-3 items-center">
-                    <span class="text-xl">🖼️</span>
-                    <input type="text" value="${value}" placeholder="Paste Image URL..." class="w-full bg-transparent text-sm outline-none placeholder-gray-300" oninput="updateBlock('${blockId}', this.value)">
+            div.className = 'content-block';
+
+            const contentHtml = type === 'text'
+                ? `<textarea class="form-control form-control-sm border-0 bg-transparent p-0" placeholder="Enter paragraph text..." oninput="updateBlock('${blockId}', this.value)" style="resize:none; font-size:0.85rem;">${value}</textarea>`
+                : `<div class="d-flex align-items-center gap-2">
+                    <span style="font-size:1.1rem;">🖼️</span>
+                    <input type="text" value="${value}" placeholder="Paste Image URL..." class="form-control form-control-sm border-0 bg-transparent p-0" oninput="updateBlock('${blockId}', this.value)" style="font-size:0.85rem;">
                    </div>`;
 
             div.innerHTML = `
-                <div class="absolute -left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/block:opacity-100 transition-opacity">
-                    <div class="w-1 h-8 bg-gray-200 rounded-full"></div>
-                </div>
-                <button onclick="removeBlock('${blockId}')" class="absolute -right-2 -top-2 w-6 h-6 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover/block:opacity-100 transition-all shadow-sm border border-red-100 hover:bg-red-500 hover:text-white">✕</button>
-                <p class="text-[8px] font-bold text-gray-300 uppercase mb-2 tracking-widest">${type}</p>
+                <div class="block-delete" onclick="removeBlock('${blockId}')">✕</div>
+                <p class="mb-2 text-muted text-uppercase" style="font-size:8px; font-weight:700; letter-spacing:0.15em;">${type}</p>
                 ${contentHtml}
             `;
-            
+
             container.appendChild(div);
             currentBlocks.push({ id: blockId, type, content: value });
         }
@@ -371,45 +499,36 @@
             };
 
             try {
-                // 1. Save Module Metadata
                 let mError;
                 if (isEdit) {
                     ({ error: mError } = await supabaseClient.from('educational_modules').update(moduleData).eq('id', id));
                 } else {
-                    // Pre-check for local duplicates before attempting DB insert
                     if (modules.some(m => m.id === id)) {
                         throw new Error(`ID ${id} already exists. Please use the suggested ID or another unique number.`);
                     }
                     ({ error: mError } = await supabaseClient.from('educational_modules').insert([moduleData]));
                 }
-                
+
                 if (mError) throw mError;
 
-                // 2. Clear and Save Paragraphs
                 if (isEdit) await supabaseClient.from('educational_module_paragraphs').delete().eq('module_id', id);
-                
+
                 const paragraphData = currentBlocks.map((b, index) => ({
                     module_id: parseInt(id),
                     order_index: index,
                     type: b.type,
-                    paragraph: b.type === 'text' ? b.content : '', // Use empty string instead of null
-                    image_url: b.type === 'image' ? b.content : ''  // Use empty string instead of null
+                    paragraph: b.type === 'text' ? b.content : '',
+                    image_url: b.type === 'image' ? b.content : ''
                 }));
-
 
                 if (paragraphData.length > 0) {
                     const { error: pError } = await supabaseClient.from('educational_module_paragraphs').insert(paragraphData);
                     if (pError) throw pError;
                 }
 
-                closeArticleModal();
+                articleModalInstance.hide();
                 loadArticles();
             } catch (err) { alert('Save Failed: ' + err.message); }
-        }
-
-        function closeArticleModal() {
-            document.getElementById('article-modal').classList.add('hidden');
-            document.getElementById('modal-backdrop').classList.add('hidden');
         }
 
         async function deleteArticle(id) {
@@ -423,4 +542,5 @@
         loadArticles();
     </script>
 </body>
+
 </html>

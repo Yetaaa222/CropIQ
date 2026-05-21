@@ -6,14 +6,13 @@ import { supabase } from './supabase.js';
 // ============================================
 
 /**
- * Sign up a new user with email and password
- * Creates user profile automatically via database trigger
- * @param {Object} credentials - User credentials
- * @param {string} credentials.email - User email
- * @param {string} credentials.password - User password (min 6 characters)
- * @param {string} credentials.fullName - User's full name
- * @param {Object} [additionalData] - Additional profile data (province, farm_size, etc.)
- * @returns {Promise<Object>} { user, session, error, needsEmailConfirmation }
+ * Sign up with email and password
+ * @param { Object } credentials
+ * @param { string } credentials.email
+ * @param { string } credentials.password
+ * @param { string } credentials.fullName
+ * @param { Object } [additionalData]
+ * @returns { Promise < Object >}
  */
 export const signUp = async ({ email, password, fullName }, additionalData = {}) => {
   try {
@@ -46,8 +45,7 @@ export const signUp = async ({ email, password, fullName }, additionalData = {})
 
     if (error) throw error;
 
-    // Note: User profile is automatically created by the database trigger
-    // defined in your SQL: handle_new_user()
+
 
     return {
       user: data.user,

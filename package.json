@@ -27,6 +27,8 @@
   },
   "private": true,
   "devDependencies": {
-    "@expo/cli": "^54.0.22"
+    "@expo/cli": "^54.0.22",
+    "@types/react": "~19.1.10",
+    "typescript": "~5.9.2"
   }
 }

@@ -258,7 +258,6 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
     const weights = [];
 
     // ── 1. RAINFALL — highest weight (40%) ────────────────────
-    // Most critical factor for rain-fed Zambian farming
     if (crop.rainfall) {
       const m = crop.rainfall.match(/(\d+)-(\d+)/);
       if (m) {
@@ -293,9 +292,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
       if (m) {
         const min = parseFloat(m[1]);
         const max = parseFloat(m[2]);
-
-        // Use monthly temp if available for the current planting month
-        // otherwise fall back to annual average
+        
         const actual = (monthlyWeather && currentMonth)
           ? (monthlyWeather[currentMonth]?.temperature || weather.temperature?.avg || 0)
           : (weather.temperature?.avg || 0);
@@ -306,7 +303,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
         let score;
         if (actual >= min && actual <= max) {
           const distanceFromMid = Math.abs(actual - mid);
-          score = 100 - (distanceFromMid / (range / 2)) * 10; // 90-100
+          score = 100 - (distanceFromMid / (range / 2)) * 10; 
         } else if (actual < min) {
           // Too cold
           const deficit = min - actual;
@@ -353,12 +350,12 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
       const waterNeeds = crop.waterNeeds.toLowerCase();
       const pattern = weather.rainfall.pattern.toLowerCase();
 
-      let score = 70; // default neutral
+      let score = 70; 
 
       if (waterNeeds.includes('high') || waterNeeds.includes('frequent')) {
         if (pattern === 'high') score = 100;
         else if (pattern === 'moderate') score = 65;
-        else score = 25; // low rainfall, high water needs = bad
+        else score = 25;
       } else if (waterNeeds.includes('moderate')) {
         if (pattern === 'moderate') score = 100;
         else if (pattern === 'high') score = 80;
@@ -366,7 +363,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
       } else if (waterNeeds.includes('low') || waterNeeds.includes('drought')) {
         if (pattern === 'low') score = 100;
         else if (pattern === 'moderate') score = 85;
-        else score = 65; // high rainfall for drought-tolerant = ok but not ideal
+        else score = 65; 
       }
 
       scores.push(score);
@@ -380,7 +377,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
 
       let score = 70;
       if (cropSoil.includes(farmSoil) || farmSoil.includes('loam')) {
-        score = 100; // exact match or loam (grows almost anything)
+        score = 100; 
       } else if (cropSoil.includes('well-drained') && !farmSoil.includes('clay')) {
         score = 85;
       } else if (cropSoil.includes('clay') && farmSoil.includes('clay')) {

@@ -4,382 +4,246 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CropIQ Admin | Analytics</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="icon" href="assets/logo.png" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(229, 231, 235, 0.5);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-        }
-        .glass-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
-        }
-        
-        /* Redesigned Sidebar - Standard CSS for CDN Compatibility */
-        .sidebar-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 0.75rem;
-            color: #94a3b8; /* text-gray-400 */
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            text-decoration: none;
-        }
-        .sidebar-item:hover {
-            background-color: rgba(240, 253, 244, 0.8); /* bg-green-50/80 */
-            color: #15803d; /* text-green-700 */
-            transform: translateX(4px);
-        }
-        .sidebar-item.active {
-            background-color: #16a34a; /* bg-green-600 */
-            color: #ffffff;
-            box-shadow: 0 10px 20px -3px rgba(22, 163, 74, 0.4);
-            transform: translateX(8px);
-        }
-        .sidebar-item svg {
-            width: 1.25rem;
-            height: 1.25rem;
-            transition: transform 0.3s ease;
-        }
-        .sidebar-item.active svg {
-            color: #ffffff;
-        }
-        .sidebar-item:hover svg {
-            transform: scale(1.1);
-        }
-        
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .animate-nav { animation: slideInRight 0.5s ease-out forwards; }
-        
-        .stat-icon {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
-        }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; overflow: hidden; }
+        #sidebar { width: 280px; min-width: 280px; background: #ffffff; border-right: 1px solid #f1f5f9; overflow-y: auto; }
+        .sidebar-brand-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #4ade80, #16a34a); border-radius: 14px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.25); }
+        .sidebar-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #94a3b8; padding: 0 1rem; margin-bottom: 0.5rem; }
+        .sidebar-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem; border-radius: 0.75rem; color: #94a3b8; text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: all 0.25s ease; }
+        .sidebar-link:hover { background-color: rgba(240, 253, 244, 0.9); color: #15803d; transform: translateX(4px); }
+        .sidebar-link.active { background-color: #16a34a; color: #fff; font-weight: 700; box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.35); transform: translateX(8px); }
+        .glass-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 1rem; transition: transform 0.25s ease, box-shadow 0.25s ease; }
+        .glass-card:hover { transform: translateY(-3px); box-shadow: 0 16px 30px -5px rgba(0, 0, 0, 0.05); }
+        .stat-icon { width: 3rem; height: 3rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+        .status-pill { font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 20px; }
+        .status-pill.connecting { background-color: #fff7ed; color: #ea580c; }
+        .status-pill.live { background-color: #f0fdf4; color: #16a34a; }
+        .status-pill.offline { background-color: #fef2f2; color: #dc2626; }
+        #main-content { overflow-y: auto; flex: 1; }
+        .panel-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(6px); z-index: 1040; opacity: 0; transition: opacity 0.3s ease; }
+        .panel-backdrop.show { opacity: 1; }
+        .slide-panel { position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 500px; background-color: #f8fafc; z-index: 1050; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; box-shadow: -20px 0 50px -10px rgba(0,0,0,0.1); }
+        .slide-panel.show { transform: translateX(0); }
+        .panel-header { position: relative; height: 190px; background: linear-gradient(135deg, #16a34a, #15803d); padding: 1.5rem; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
+        .panel-header::before { content: ''; position: absolute; top: -80px; right: -80px; width: 250px; height: 250px; background: rgba(255,255,255,0.08); border-radius: 50%; filter: blur(40px); }
+        .panel-avatar { width: 72px; height: 72px; border-radius: 1.25rem; background: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.75rem; color: #16a34a; border: 3px solid rgba(255,255,255,0.3); }
+        .stat-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 1.25rem; padding: 1rem; }
+        .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
+        .crop-tag { display: inline-block; padding: 0.25rem 0.75rem; background-color: #f0fdf4; color: #15803d; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid #dcfce7; }
+        .farm-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 1.25rem; padding: 1rem; }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-gray-900 overflow-hidden">
-    <div class="flex h-screen">
-        <!-- Sidebar -->
-        <aside class="w-72 bg-white border-r border-gray-100 flex flex-col hidden lg:flex z-20">
-            <div class="p-8">
-                <div class="flex items-center gap-3 text-green-600 group cursor-pointer">
-                    <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-green-100 transform transition-transform group-hover:rotate-12">🌱</div>
+<body>
+    <div class="d-flex" style="height: 100vh;">
+        <!-- ── Sidebar ── -->
+        <aside id="sidebar" class="d-none d-lg-flex flex-column">
+            <div class="p-4 pb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="sidebar-brand-icon">🌱</div>
                     <div>
-                        <span class="font-extrabold text-xl tracking-tight block text-gray-800">CropIQ</span>
-                        <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-green-600/60">Intelligence</span>
+                        <div class="fw-bold fs-6 text-dark lh-1">CropIQ</div>
+                        <div class="text-uppercase text-success opacity-75" style="font-size:10px; letter-spacing:0.18em; font-weight:700;">Intelligence</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="flex-1 px-6 flex flex-col gap-10 overflow-y-auto">
-                <!-- Group 1 -->
-                <div class="animate-nav" style="animation-delay: 0.1s">
-                    <p class="px-4 text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em] mb-4">Core Insights</p>
-                    <nav class="space-y-1.5">
-                        <a href="admin.html" class="sidebar-item active group">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                            <span class="font-bold">Dashboard</span>
-                        </a>
+            <div class="flex-grow-1 px-3 d-flex flex-column gap-4 overflow-auto pb-4" style="font-size:0.875rem;">
+                <div>
+                    <p class="sidebar-section-label">Core Insights</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="admin.html" class="sidebar-link active"><i class="bi bi-grid-1x2"></i> Dashboard</a>
                     </nav>
                 </div>
-
-                <!-- Group 2 -->
-                <div class="animate-nav" style="animation-delay: 0.2s">
-                    <p class="px-4 text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em] mb-4">Operations</p>
-                    <nav class="space-y-1.5">
-                        <a href="users.html" class="sidebar-item group">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                            <span class="font-semibold">Farmers</span>
-                        </a>
-                        <a href="articles.html" class="sidebar-item group">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <span class="font-semibold">Knowledge</span>
-                        </a>
-                        <a href="crops.html" class="sidebar-item group">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20h10M12 4c3.314 0 6 2.686 6 6 0 4.5-6 10-6 10S6 14.5 6 10c0-3.314 2.686-6 6-6z"></path></svg>
-                            <span class="font-semibold">Crops</span>
-                        </a>
+                <div>
+                    <p class="sidebar-section-label">Operations</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="users.html" class="sidebar-link"><i class="bi bi-people"></i> Farmers</a>
+                        <a href="articles.html" class="sidebar-link"><i class="bi bi-journal-richtext"></i> Knowledge</a>
+                        <a href="crops.html" class="sidebar-link"><i class="bi bi-flower1"></i> Crops</a>
                     </nav>
                 </div>
-
-                <!-- Group 3 -->
-                <div class="animate-nav" style="animation-delay: 0.3s">
-                    <p class="px-4 text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em] mb-4">Platform</p>
-                    <nav class="space-y-1.5">
-                        <a href="settings.html" class="sidebar-item group">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            <span class="font-semibold">Settings</span>
-                        </a>
+                <div>
+                    <p class="sidebar-section-label">Platform</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="settings.html" class="sidebar-link"><i class="bi bi-gear"></i> Settings</a>
                     </nav>
                 </div>
-            </div>
-
-            <!-- Footer Profile -->
-            <div class="p-6 bg-gray-50/50 mt-auto animate-nav" style="animation-delay: 0.4s">
-                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm group cursor-pointer hover:shadow-md transition-all">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-green-600 rounded-2xl flex items-center justify-center font-bold text-white transition-transform group-hover:scale-110 group-hover:rotate-6">AD</div>
-                        <div class="min-w-0">
-                            <p class="text-xs font-extrabold text-gray-800 truncate">Super Admin</p>
-                            <p class="text-[10px] text-gray-400 truncate">online</p>
-                        </div>
-                    </div>
-                </div>
-                <button class="w-full mt-4 py-2 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest hover:text-red-500 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    Logout
-                </button>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <!-- Topbar -->
-            <header class="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-8 z-10">
+        <!-- ── Main ── -->
+        <div class="d-flex flex-column flex-grow-1 min-w-0">
+            <!-- Header -->
+            <header class="bg-white border-bottom d-flex align-items-center justify-content-between px-4" style="height:64px; border-color:#f1f5f9 !important; z-index:10;">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800">Analytics Overview</h2>
-                    <p class="text-xs text-gray-400">Welcome back, Admin</p>
+                    <h2 class="mb-0 fw-bold fs-6 text-dark">Analytics Overview</h2>
+                    <p class="mb-0 text-muted" style="font-size:0.75rem;">Welcome back, Admin</p>
                 </div>
-                <div class="flex items-center gap-4">
-                    <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 text-orange-600 text-xs font-medium">
-                        <span class="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span>
-                        Connecting...
-                    </div>
-                    <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-xs">
-                        AD
-                    </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span id="connection-status" class="status-pill connecting">Connecting...</span>
+                    <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold" style="width:32px;height:32px;background:#dcfce7;color:#15803d;font-size:0.75rem;">AD</div>
                 </div>
             </header>
 
-            <!-- Scrollable Content -->
-            <div class="flex-1 overflow-y-auto p-8">
+            <!-- Scrollable body -->
+            <div id="main-content" class="p-4">
                 <!-- Summary Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="glass-card rounded-2xl p-6 bg-white">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="stat-icon bg-blue-50 text-blue-500">👥</div>
-                            <span class="text-xs font-semibold text-green-500 bg-green-50 px-2 py-1 rounded">+12%</span>
-                        </div>
-                        <p class="text-gray-400 text-sm font-medium">Total Users</p>
-                        <p id="total-users" class="text-3xl font-bold mt-1 text-gray-900">0</p>
-                    </div>
-
-                    <div class="glass-card rounded-2xl p-6 bg-white">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="stat-icon bg-green-50 text-green-500">🚜</div>
-                            <span class="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded">Stable</span>
-                        </div>
-                        <p class="text-gray-400 text-sm font-medium">Total Farms</p>
-                        <p id="total-farms" class="text-3xl font-bold mt-1 text-gray-900">0</p>
-                    </div>
-
-                    <div class="glass-card rounded-2xl p-6 bg-white">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="stat-icon bg-purple-50 text-purple-500">📖</div>
-                            <span class="text-xs font-semibold text-blue-500 bg-blue-50 px-2 py-1 rounded">+8%</span>
-                        </div>
-                        <p class="text-gray-400 text-sm font-medium">Articles Read</p>
-                        <p id="total-reads" class="text-3xl font-bold mt-1 text-gray-900">0</p>
-                    </div>
-
-                    <div class="glass-card rounded-2xl p-6 bg-white">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="stat-icon bg-orange-50 text-orange-500">🌱</div>
-                            <span class="text-xs font-semibold text-orange-500 bg-orange-50 px-2 py-1 rounded">Avg</span>
-                        </div>
-                        <p class="text-gray-400 text-sm font-medium">Avg. Crops/User</p>
-                        <p id="avg-crops" class="text-3xl font-bold mt-1 text-gray-900">0</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    <!-- Main Chart -->
-                    <div class="lg:col-span-2 glass-card rounded-2xl p-6 bg-white">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="font-bold text-gray-800">Top Selected Crops</h3>
-                            <select class="text-xs bg-gray-50 border-none rounded-lg px-3 py-2 outline-none">
-                                <option>Last 30 Days</option>
-                                <option>All Time</option>
-                            </select>
-                        </div>
-                        <div class="h-[300px]">
-                            <canvas id="cropsChart"></canvas>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="stat-icon" style="background:#eff6ff;color:#3b82f6;">👥</div>
+                                <span class="badge" style="background:#f0fdf4;color:#16a34a;font-size:11px;font-weight:600;border-radius:6px;">+12%</span>
+                            </div>
+                            <p class="text-muted mb-1" style="font-size:0.875rem;">Total Users</p>
+                            <p id="total-users" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
                         </div>
                     </div>
-
-                    <!-- Distribution -->
-                    <div class="glass-card rounded-2xl p-6 bg-white">
-                        <h3 class="font-bold text-gray-800 mb-6 text-center">User Locations</h3>
-                        <div class="h-[240px]">
-                            <canvas id="locationChart"></canvas>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="stat-icon" style="background:#f0fdf4;color:#16a34a;">🚜</div>
+                                <span class="badge" style="background:#f8fafc;color:#94a3b8;font-size:11px;font-weight:600;border-radius:6px;">Stable</span>
+                            </div>
+                            <p class="text-muted mb-1" style="font-size:0.875rem;">Total Farms</p>
+                            <p id="total-farms" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
                         </div>
-                        <div id="location-legend" class="mt-4 space-y-2">
-                            <!-- Legend will be dynamic -->
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="stat-icon" style="background:#faf5ff;color:#a855f7;">📖</div>
+                                <span class="badge" style="background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:600;border-radius:6px;">+8%</span>
+                            </div>
+                            <p class="text-muted mb-1" style="font-size:0.875rem;">Articles Read</p>
+                            <p id="total-reads" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="stat-icon" style="background:#fff7ed;color:#f97316;">🌱</div>
+                                <span class="badge" style="background:#fff7ed;color:#f97316;font-size:11px;font-weight:600;border-radius:6px;">Avg</span>
+                            </div>
+                            <p class="text-muted mb-1" style="font-size:0.875rem;">Avg. Crops/User</p>
+                            <p id="avg-crops" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Recent Activity -->
-                    <div class="glass-card rounded-2xl p-6 bg-white">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="font-bold text-gray-800">Recent Onboarding</h3>
-                            <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Click a user to view profile</p>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm">
-                                <thead>
-                                    <tr class="text-gray-400 border-b border-gray-50">
-                                        <th class="pb-3 font-medium">User</th>
-                                        <th class="pb-3 font-medium">Province</th>
-                                        <th class="pb-3 font-medium">Status</th>
-                                        <th class="pb-3 font-medium">Joined</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="recent-users-table">
-                                    <!-- Dynamic rows -->
-                                </tbody>
-                            </table>
+                <!-- Charts Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-lg-8">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="fw-bold text-dark mb-0">Top Selected Crops</h6>
+                                <select class="form-select form-select-sm" style="width:auto;font-size:0.75rem;border-radius:0.5rem;border-color:#e2e8f0;">
+                                    <option>Last 30 Days</option>
+                                    <option>All Time</option>
+                                </select>
+                            </div>
+                            <div style="height:300px;"><canvas id="cropsChart"></canvas></div>
                         </div>
                     </div>
-
-                    <!-- Learning Stats -->
-                    <div class="glass-card rounded-2xl p-6 bg-white">
-                        <h3 class="font-bold text-gray-800 mb-6">Article Performance</h3>
-                        <div class="h-[280px]">
-                            <canvas id="articlesChart"></canvas>
+                    <div class="col-lg-4">
+                        <div class="glass-card p-4">
+                            <h6 class="fw-bold text-dark mb-3 text-center">User Locations</h6>
+                            <div style="height:240px;"><canvas id="locationChart"></canvas></div>
+                            <div id="location-legend" class="mt-3 d-flex flex-column gap-2"></div>
                         </div>
                     </div>
                 </div>
-                <!-- Footer RLS Notice -->
-                <div id="rls-warning" class="mt-8 p-4 bg-amber-50 border border-amber-100 rounded-xl hidden">
-                    <div class="flex gap-3">
-                        <span class="text-xl">💡</span>
+
+                <!-- Bottom Row -->
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="fw-bold text-dark mb-0">Recent Onboarding</h6>
+                                <span class="text-muted text-uppercase" style="font-size:10px;font-weight:600;letter-spacing:0.06em;">Click to view</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-borderless mb-0" style="font-size:0.85rem;">
+                                    <thead>
+                                        <tr class="text-muted" style="border-bottom:1px solid #f8fafc;">
+                                            <th class="fw-medium pb-2">User</th>
+                                            <th class="fw-medium pb-2">Province</th>
+                                            <th class="fw-medium pb-2">Status</th>
+                                            <th class="fw-medium pb-2">Joined</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recent-users-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="glass-card p-4">
+                            <h6 class="fw-bold text-dark mb-3">Article Performance</h6>
+                            <div style="height:280px;"><canvas id="articlesChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RLS Warning -->
+                <div id="rls-warning" class="mt-4 p-3 rounded-3 d-none" style="background:#fffbeb; border:1px solid #fef3c7;">
+                    <div class="d-flex gap-3">
+                        <span style="font-size:1.25rem;">💡</span>
                         <div>
-                            <p class="text-amber-800 font-bold text-sm">Action Required: Permissions</p>
-                            <p class="text-amber-700 text-xs mt-1">If no data is appearing, please apply the RLS policies from <code>admin_setup_policies.sql</code> to your Supabase project.</p>
+                            <p class="fw-bold mb-1" style="font-size:0.875rem; color:#92400e;">Action Required: Permissions</p>
+                            <p class="mb-0" style="font-size:0.8rem; color:#a16207;">If no data is appearing, apply the RLS policies from <code class="bg-white px-1 rounded">admin_setup_policies.sql</code> to your Supabase project.</p>
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
-    </div>
+            </div><!-- /main-content -->
+        </div><!-- /main col -->
+    </div><!-- /flex wrapper -->
 
-    <!-- User Profile Slide-over -->
-    <div id="user-panel-backdrop" class="fixed inset-0 bg-black/40 backdrop-blur-md z-40 hidden opacity-0 transition-opacity duration-300" onclick="closeUserPanel()"></div>
-    <div id="user-panel" class="fixed top-0 right-0 h-full w-full max-w-lg bg-[#f8fafc] shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.1)] z-50 transform translate-x-full transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col">
-        <!-- Header with Gradient & Profile Image Heuristic -->
-        <div class="relative h-48 bg-gradient-to-br from-green-600 to-green-800 p-8 flex flex-col justify-end overflow-hidden">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-            <div class="absolute top-6 left-6 right-6 flex justify-between items-start z-10">
-                <button onclick="closeUserPanel()" class="p-2.5 bg-black/20 hover:bg-black/30 text-white rounded-2xl transition-all active:scale-90">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    <!-- ── User Profile Slide-over ── -->
+    <div id="user-panel-backdrop" class="panel-backdrop d-none" onclick="closeUserPanel()"></div>
+    <div id="user-panel" class="slide-panel">
+        <div class="panel-header">
+            <div class="d-flex justify-content-between align-items-start position-relative mb-3" style="z-index:2;">
+                <button onclick="closeUserPanel()" class="btn btn-sm text-white" style="background:rgba(0,0,0,0.2); border-radius:0.75rem; padding:0.4rem 0.6rem;">
+                    <i class="bi bi-x-lg"></i>
                 </button>
-                <div class="px-3 py-1 bg-white/20 border border-white/20 rounded-full text-[10px] font-bold text-white uppercase tracking-widest backdrop-blur-md">User Profile</div>
+                <span class="badge text-white" style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.2); font-size:10px; letter-spacing:0.12em; text-transform:uppercase; border-radius:20px; padding:4px 12px;">User Profile</span>
             </div>
-            
-            <div class="relative z-10 flex items-center gap-5">
-                <div id="u-avatar" class="w-20 h-20 rounded-3xl bg-white shadow-xl flex items-center justify-center font-bold text-3xl text-green-700 border-4 border-white/30 transform transition-transform hover:rotate-3">?</div>
+            <div class="d-flex align-items-center gap-3 position-relative" style="z-index:2;">
+                <div class="panel-avatar" id="u-avatar">?</div>
                 <div class="text-white">
-                    <h3 id="u-name" class="font-extrabold text-2xl tracking-tight leading-none">User Name</h3>
-                    <p id="u-id" class="text-xs text-white/60 font-mono mt-2 flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> ID: ...
-                    </p>
+                    <h5 id="u-name" class="fw-bold mb-1 lh-1" style="font-size:1.35rem;">User Name</h5>
+                    <p id="u-id" class="mb-0 opacity-75" style="font-size:11px; font-family:monospace;">ID: ...</p>
                 </div>
             </div>
         </div>
-
-        <!-- Content Area -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-6">
-            <!-- Quick Stats Grid -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                    <div class="flex items-center gap-2 mb-2 text-gray-400">
-                        <span class="text-lg">🗺️</span>
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Province</span>
-                    </div>
-                    <p id="u-province" class="font-bold text-gray-800 text-sm">Not set</p>
-                </div>
-                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                    <div class="flex items-center gap-2 mb-2 text-gray-400">
-                        <span class="text-lg">📐</span>
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Farm Size</span>
-                    </div>
-                    <p id="u-farm-size" class="font-bold text-gray-800 text-sm">Not set</p>
-                </div>
-                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                    <div class="flex items-center gap-2 mb-2 text-gray-400">
-                        <span class="text-lg">⏳</span>
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Experience</span>
-                    </div>
-                    <p id="u-experience" class="font-bold text-gray-800 text-sm">0 Years</p>
-                </div>
-                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                    <div class="flex items-center gap-2 mb-2 text-gray-400">
-                        <span class="text-lg">🧪</span>
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Soil Type</span>
-                    </div>
-                    <p id="u-soil" class="font-bold text-gray-800 text-sm">Not set</p>
-                </div>
+        <div class="flex-grow-1 overflow-auto p-4">
+            <div class="row g-3 mb-4">
+                <div class="col-6"><div class="stat-card"><div class="d-flex align-items-center gap-2 mb-2"><span>🗺️</span><span class="stat-label">Province</span></div><p id="u-province" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p></div></div>
+                <div class="col-6"><div class="stat-card"><div class="d-flex align-items-center gap-2 mb-2"><span>📐</span><span class="stat-label">Farm Size</span></div><p id="u-farm-size" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p></div></div>
+                <div class="col-6"><div class="stat-card"><div class="d-flex align-items-center gap-2 mb-2"><span>⏳</span><span class="stat-label">Experience</span></div><p id="u-experience" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">0 Years</p></div></div>
+                <div class="col-6"><div class="stat-card"><div class="d-flex align-items-center gap-2 mb-2"><span>🧪</span><span class="stat-label">Soil Type</span></div><p id="u-soil" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p></div></div>
             </div>
-
-            <!-- Crops Section -->
-            <section>
-                <div class="flex items-center justify-between mb-4">
-                    <h4 class="font-bold text-gray-800 flex items-center gap-2">
-                        <span class="w-8 h-8 rounded-xl bg-green-100 text-green-600 flex items-center justify-center text-sm">🌿</span>
-                        Interests
-                    </h4>
-                    <span id="u-crops-count" class="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-1 rounded-lg">0 Crops</span>
+            <div class="mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2"><span class="d-flex align-items-center justify-content-center rounded-3" style="width:32px;height:32px;background:#dcfce7;color:#16a34a;font-size:0.875rem;">🌿</span>Interests</h6>
+                    <span id="u-crops-count" class="badge bg-light text-secondary" style="font-size:10px;font-weight:700;">0 Crops</span>
                 </div>
-                <div id="u-crops" class="flex flex-wrap gap-2">
-                    <!-- Tags -->
-                </div>
-            </section>
-
-            <!-- Farms List -->
-            <section>
-                <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-sm">📍</span>
-                    Registered Farms
-                </h4>
-                <div id="u-farms-list" class="space-y-3">
-                    <!-- Dynamic -->
-                </div>
-            </section>
-
-            <!-- Recommendations -->
-            <section>
-                <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center text-sm">✨</span>
-                    Recent Activity
-                </h4>
-                <div id="u-recs-list" class="bg-white rounded-3xl border border-gray-100 overflow-hidden">
-                    <!-- Dynamic -->
-                </div>
-            </section>
+                <div id="u-crops" class="d-flex flex-wrap gap-2"></div>
+            </div>
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"><span class="d-flex align-items-center justify-content-center rounded-3" style="width:32px;height:32px;background:#dbeafe;color:#2563eb;font-size:0.875rem;">📍</span>Registered Farms</h6>
+                <div id="u-farms-list" class="d-flex flex-column gap-2"></div>
+            </div>
+            <div>
+                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"><span class="d-flex align-items-center justify-content-center rounded-3" style="width:32px;height:32px;background:#ffedd5;color:#ea580c;font-size:0.875rem;">✨</span>Recent Activity</h6>
+                <div id="u-recs-list" class="bg-white border rounded-4 overflow-hidden" style="border-color:#f1f5f9 !important;"></div>
+            </div>
         </div>
     </div>
 
@@ -412,16 +276,16 @@
                 if (progressError) throw progressError;
 
                 updateDashboard(users, farms, progress);
-                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500"></span> Live Data';
-                statusEl.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 text-green-600 text-xs font-medium';
+                statusEl.textContent = 'Live Data';
+                statusEl.className = 'status-pill live';
 
-                if (users.length === 0) document.getElementById('rls-warning').classList.remove('hidden');
+                if (users.length === 0) document.getElementById('rls-warning').classList.remove('d-none');
 
             } catch (error) {
                 console.error(error);
-                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span> Offline';
-                statusEl.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 text-red-600 text-xs font-medium';
-                document.getElementById('rls-warning').classList.remove('hidden');
+                statusEl.textContent = 'Offline';
+                statusEl.className = 'status-pill offline';
+                document.getElementById('rls-warning').classList.remove('d-none');
             }
         }
 
@@ -445,20 +309,16 @@
 
             const tableBody = document.getElementById('recent-users-table');
             tableBody.innerHTML = users.slice(0, 10).map(u => `
-                <tr class="group hover:bg-green-50/50 transition-colors cursor-pointer" onclick="openUserPanel('${u.id}')">
-                    <td class="py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 group-hover:bg-green-100 group-hover:text-green-600 transition-colors">
-                                ${u.full_name.charAt(0)}
-                            </div>
-                            <span class="font-semibold text-gray-700 group-hover:text-green-700 transition-colors">${u.full_name}</span>
+                <tr style="cursor:pointer;" onclick="openUserPanel('${u.id}')">
+                    <td class="py-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold" style="width:32px;height:32px;background:#f1f5f9;color:#94a3b8;font-size:0.75rem;">${u.full_name.charAt(0)}</div>
+                            <span class="fw-semibold text-dark">${u.full_name}</span>
                         </div>
                     </td>
-                    <td class="py-4 text-gray-500">${u.province || '—'}</td>
-                    <td class="py-4">
-                        <span class="px-2 py-1 bg-green-50 text-green-600 rounded-md text-[10px] font-bold uppercase tracking-wider">Active</span>
-                    </td>
-                    <td class="py-4 text-gray-400 text-xs">${new Date(u.created_at).toLocaleDateString()}</td>
+                    <td class="py-2 text-muted">${u.province || '—'}</td>
+                    <td class="py-2"><span class="badge" style="background:#f0fdf4;color:#16a34a;font-size:10px;font-weight:700;text-transform:uppercase;border-radius:6px;">Active</span></td>
+                    <td class="py-2 text-muted" style="font-size:0.8rem;">${new Date(u.created_at).toLocaleDateString()}</td>
                 </tr>
             `).join('');
 
@@ -472,9 +332,8 @@
             const backdrop = document.getElementById('user-panel-backdrop');
             
             // Show panel loading state
-            panel.classList.remove('translate-x-full');
-            backdrop.classList.remove('hidden');
-            setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+            backdrop.classList.remove('d-none');
+            setTimeout(() => { backdrop.classList.add('show'); panel.classList.add('show'); }, 10);
 
             try {
                 // Fetch User Details in parallel
@@ -499,39 +358,36 @@
 
                 // Crops
                 const cropHtml = (profile.selected_crops || []).map(c => `
-                    <span class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold border border-green-100">${c}</span>
+                    <span class="crop-tag">${c}</span>
                 `).join('');
-                document.getElementById('u-crops').innerHTML = cropHtml || '<p class="text-gray-400 text-xs italic">No crops selected</p>';
+                document.getElementById('u-crops').innerHTML = cropHtml || '<p class="text-muted fst-italic" style="font-size:0.8rem;">No crops selected</p>';
 
                 // Farms
                 const farmHtml = farms.map(f => `
-                    <div class="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm">
-                        <div class="flex justify-between items-start mb-2">
-                            <p class="font-bold text-gray-800">${f.name}</p>
-                            <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase">${f.province}</span>
+                    <div class="farm-card">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <p class="fw-bold text-dark mb-0" style="font-size:0.875rem;">${f.name}</p>
+                            <span class="badge" style="background:#eff6ff;color:#2563eb;font-size:10px;font-weight:700;text-transform:uppercase;border-radius:20px;">${f.province}</span>
                         </div>
-                        <p class="text-xs text-gray-400">Coords: ${f.latitude.toFixed(4)}, ${f.longitude.toFixed(4)}</p>
-                        <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                            <span class="w-2 h-2 rounded-full bg-blue-300"></span> ${f.soil_type || 'Unknown Soil'}
-                        </p>
+                        <p class="text-muted mb-0" style="font-size:10px;font-family:monospace;">Coords: ${f.latitude.toFixed(4)}, ${f.longitude.toFixed(4)}</p>
                     </div>
                 `).join('');
-                document.getElementById('u-farms-list').innerHTML = farmHtml || '<p class="text-gray-400 text-xs italic">No farms recorded</p>';
+                document.getElementById('u-farms-list').innerHTML = farmHtml || '<p class="text-muted fst-italic" style="font-size:0.8rem;">No farms recorded</p>';
 
                 // Recommendations
                 const recHtml = recs.map(r => `
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                    <div class="d-flex align-items-center justify-content-between p-3 border-bottom" style="border-color:#f8fafc !important;">
                         <div>
-                            <p class="font-bold text-sm text-gray-800">${r.crop_name}</p>
-                            <p class="text-[10px] text-gray-400">${new Date(r.created_at).toLocaleDateString()}</p>
+                            <p class="fw-bold text-dark mb-0" style="font-size:0.875rem;">${r.crop_name}</p>
+                            <p class="text-muted mb-0" style="font-size:10px;">${new Date(r.created_at).toLocaleDateString()}</p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-xs font-bold text-green-600">${r.suitability_score}%</p>
-                            <p class="text-[10px] text-gray-400">Score</p>
+                        <div class="text-end">
+                            <p class="fw-bold text-success mb-0" style="font-size:0.8rem;">${r.suitability_score}%</p>
+                            <p class="text-muted mb-0" style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;">Score</p>
                         </div>
                     </div>
                 `).join('');
-                document.getElementById('u-recs-list').innerHTML = recHtml || '<p class="text-gray-400 text-xs italic">No recommendations yet</p>';
+                document.getElementById('u-recs-list').innerHTML = recHtml || '<p class="text-muted fst-italic text-center p-3" style="font-size:0.8rem;">No recommendations yet</p>';
 
             } catch (err) {
                 console.error('Error loading profile:', err);
@@ -542,9 +398,9 @@
         function closeUserPanel() {
             const panel = document.getElementById('user-panel');
             const backdrop = document.getElementById('user-panel-backdrop');
-            panel.classList.add('translate-x-full');
-            backdrop.classList.add('opacity-0');
-            setTimeout(() => backdrop.classList.add('hidden'), 300);
+            panel.classList.remove('show');
+            backdrop.classList.remove('show');
+            setTimeout(() => backdrop.classList.add('d-none'), 300);
         }
 
         function renderCropsChart(counts) {
@@ -602,12 +458,12 @@
 
             const legendEl = document.getElementById('location-legend');
             legendEl.innerHTML = labels.map((l, i) => `
-                <div class="flex items-center justify-between text-xs">
-                    <div class="flex items-center gap-2 text-gray-500">
-                        <span class="w-2 h-2 rounded-full" style="background:${colors[i % colors.length]}"></span>
+                <div class="d-flex align-items-center justify-content-between" style="font-size:0.8rem;">
+                    <div class="d-flex align-items-center gap-2 text-muted">
+                        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:${colors[i % colors.length]}"></span>
                         ${l}
                     </div>
-                    <span class="font-bold text-gray-700">${data[i]}</span>
+                    <span class="fw-bold text-dark">${data[i]}</span>
                 </div>
             `).join('');
         }
@@ -759,17 +615,20 @@
             form.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 submitBtn.disabled = true;
-                status.className = 'text-xs text-gray-500';
+                status.className = 'text-muted';
+                status.style.fontSize = '12px';
                 status.textContent = 'Saving crop...';
 
                 try {
                     await createCropFromAdmin(form);
-                    status.className = 'text-xs text-green-600 font-semibold';
+                    status.className = 'text-success fw-semibold';
+                    status.style.fontSize = '12px';
                     status.textContent = 'Crop saved successfully.';
                     await fetchAnalytics();
                 } catch (error) {
                     console.error('Error creating crop from admin:', error);
-                    status.className = 'text-xs text-red-600 font-semibold';
+                    status.className = 'text-danger fw-semibold';
+                    status.style.fontSize = '12px';
                     status.textContent = `Failed: ${error.message || 'Could not save crop'}`;
                 } finally {
                     submitBtn.disabled = false;
@@ -780,5 +639,8 @@
         initAddCropForm();
         fetchAnalytics();
     </script>
+
+    <!-- Bootstrap 5 JS bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
