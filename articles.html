@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CropIQ Admin | Articles</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <script>
+        if (localStorage.getItem('admin-theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            overflow: hidden;
+        }
+
+        /* ── Sidebar ── */
+        #sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: #ffffff;
+            border-right: 1px solid #f1f5f9;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #4ade80, #16a34a);
+            border-radius: 14px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.25);
+        }
+
+        .sidebar-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            padding: 0 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 1rem;
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(240, 253, 244, 0.9);
+            color: #15803d;
+            transform: translateX(4px);
+        }
+
+        .sidebar-link.active {
+            background-color: #16a34a;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.35);
+            transform: translateX(8px);
+        }
+
+        /* ── AI banner ── */
+        @keyframes pulse-border {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(22, 163, 74, 0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% center;
+            }
+
+            100% {
+                background-position: 200% center;
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ai-banner {
+            animation: pulse-border 2s ease-in-out infinite;
+        }
+
+        .ai-btn {
+            background: linear-gradient(90deg, #15803d, #16a34a, #22c55e, #16a34a, #15803d);
+            background-size: 200% auto;
+            animation: shimmer 3s linear infinite;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .ai-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
+        }
+
+        .ai-btn:disabled {
+            animation: none;
+            background: #d1fae5;
+            color: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .spinner-sm {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .badge-ai {
+            background-color: #dcfce7;
+            color: #15803d;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 20px;
+            padding: 2px 10px;
+        }
+
+        .field-filled {
+            animation: fadeIn 0.3s ease;
+            border-color: #86efac !important;
+            background-color: #f0fdf4 !important;
+        }
+
+        /* ── Scrollable main content ── */
+        #main-content {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* ── Article cards ── */
+        .article-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .article-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 30px -5px rgba(0, 0, 0, 0.06);
+        }
+
+        .article-card .card-actions {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: all 0.2s ease;
+        }
+
+        .article-card:hover .card-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .article-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 1rem;
+            background-color: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.25s;
+        }
+
+        .article-card:hover .article-icon {
+            background-color: #f0fdf4;
+            transform: scale(1.08);
+        }
+
+        /* ── Modal ── */
+        .modal-green .modal-header {
+            background: #16a34a;
+            color: #fff;
+            border: none;
+        }
+
+        .modal-green .modal-content {
+            border-radius: 1.25rem;
+            overflow: hidden;
+            border: none;
+        }
+
+        .modal-green .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .content-block {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1rem;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .content-block .block-delete {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+        }
+
+        .content-block:hover .block-delete {
+            opacity: 1;
+        }
+
+        .content-block .block-delete:hover {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .form-control:focus,
+        .form-control:focus {
+            border-radius: 0.75rem;
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+        }
+
+        .form-control {
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            border-color: #e2e8f0;
+        }
+
+        .dashed-zone {
+            min-height: 80px;
+            background: rgba(248, 250, 252, 0.5);
+            border: 2px dashed #e2e8f0;
+            border-radius: 1.25rem;
+            padding: 1rem;
+        }
+
+        /* ── Dark Mode Styles ── */
+        html.dark-mode body {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+        }
+        html.dark-mode #sidebar {
+            background: #1e293b !important;
+            border-right-color: #334155 !important;
+        }
+        html.dark-mode .sidebar-brand-icon {
+            box-shadow: 0 8px 20px -4px rgba(34, 197, 94, 0.15) !important;
+        }
+        html.dark-mode .sidebar-link {
+            color: #94a3b8 !important;
+        }
+        html.dark-mode .sidebar-link:hover {
+            background-color: rgba(34, 197, 94, 0.1) !important;
+            color: #4ade80 !important;
+        }
+        html.dark-mode .sidebar-link.active {
+            background-color: #16a34a !important;
+            color: #fff !important;
+        }
+        html.dark-mode header {
+            background-color: #1e293b !important;
+            border-bottom-color: #334155 !important;
+        }
+        html.dark-mode header h2,
+        html.dark-mode header h5 {
+            color: #f8fafc !important;
+        }
+        html.dark-mode .glass-card,
+        html.dark-mode .settings-card,
+        html.dark-mode .stat-card,
+        html.dark-mode .farm-card,
+        html.dark-mode .bg-white.border,
+        html.dark-mode .crop-card,
+        html.dark-mode .article-card,
+        html.dark-mode .content-block {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html.dark-mode .article-icon {
+            background-color: #334155 !important;
+        }
+        html.dark-mode .text-dark {
+            color: #f8fafc !important;
+        }
+        html.dark-mode .text-muted {
+            color: #94a3b8 !important;
+        }
+        html.dark-mode .form-control {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html.dark-mode .form-control::placeholder {
+            color: #64748b !important;
+        }
+        html.dark-mode .form-control:focus {
+            border-color: #22c55e !important;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
+        }
+        html.dark-mode .form-select {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html.dark-mode .table {
+            color: #f8fafc !important;
+        }
+        html.dark-mode .table th {
+            background-color: #1e293b !important;
+            color: #94a3b8 !important;
+            border-bottom-color: #334155 !important;
+        }
+        html.dark-mode .table td {
+            border-bottom-color: #334155 !important;
+        }
+        html.dark-mode .table tbody tr:hover {
+            background-color: rgba(34, 197, 94, 0.08) !important;
+        }
+        html.dark-mode .table-responsive,
+        html.dark-mode .border,
+        html.dark-mode .border-bottom,
+        html.dark-mode .border-top,
+        html.dark-mode .border-start,
+        html.dark-mode .border-end {
+            border-color: #334155 !important;
+        }
+        html.dark-mode .form-control[readonly] {
+            background-color: #0f172a !important;
+            color: #94a3b8 !important;
+        }
+        html.dark-mode .user-avatar {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+        html.dark-mode tr:hover .user-avatar {
+            background-color: rgba(34, 197, 94, 0.2) !important;
+            color: #4ade80 !important;
+        }
+        html.dark-mode .slide-panel {
+            background-color: #0f172a !important;
+            box-shadow: -20px 0 50px -10px rgba(0, 0, 0, 0.3) !important;
+        }
+        html.dark-mode .modal-content {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+        html.dark-mode .modal-header {
+            border-bottom-color: #334155 !important;
+        }
+        html.dark-mode .modal-footer {
+            border-top-color: #334155 !important;
+            background-color: #1e293b !important;
+        }
+        html.dark-mode .btn-close {
+            filter: invert(1) !important;
+        }
+        html.dark-mode .ai-banner {
+            background: linear-gradient(135deg, #064e3b, #022c22) !important;
+            border-color: #047857 !important;
+        }
+        html.dark-mode .text-success-emphasis {
+            color: #a7f3d0 !important;
+        }
+        html.dark-mode .text-success {
+            color: #4ade80 !important;
+        }
+        html.dark-mode .badge-ai {
+            background-color: #064e3b !important;
+            color: #6ee7b7 !important;
+        }
+        html.dark-mode .toggle-track {
+            background-color: #334155 !important;
+        }
+        html.dark-mode .toggle-track.active {
+            background-color: #22c55e !important;
+        }
+        html.dark-mode code.bg-light,
+        html.dark-mode .bg-light,
+        html.dark-mode .dashed-zone {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+            border-color: #475569 !important;
+        }
+        html.dark-mode .article-card .card-actions .btn {
+            background-color: #1e293b !important;
+        }
+
+        /* ── Mobile Sidebar Styles ── */
+        @media (max-width: 991.98px) {
+            #sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                bottom: 0;
+                z-index: 1045;
+                transition: left 0.3s ease;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+                display: flex !important;
+            }
+            #sidebar.show {
+                left: 0;
+            }
+        }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1040;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="d-flex" style="height: 100vh;">
+
+        <!-- ── Sidebar ── -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <aside id="sidebar" class="flex-column">
+            <!-- Brand -->
+            <div class="p-4 pb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="sidebar-brand-icon">🌱</div>
+                    <div>
+                        <div class="fw-bold fs-6 text-dark lh-1">CropIQ</div>
+                        <div class="text-uppercase text-success opacity-75"
+                            style="font-size:10px; letter-spacing:0.18em; font-weight:700;">Intelligence</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nav -->
+            <div class="flex-grow-1 px-3 d-flex flex-column gap-4 overflow-auto pb-4" style="font-size:0.875rem;">
+                <div>
+                    <p class="sidebar-section-label">Core Insights</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="admin.html" class="sidebar-link">
+                            <i class="bi bi-grid-1x2"></i> Dashboard
+                        </a>
+                    </nav>
+                </div>
+                <div>
+                    <p class="sidebar-section-label">Operations</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="users.html" class="sidebar-link">
+                            <i class="bi bi-people"></i> Farmers
+                        </a>
+                        <a href="articles.html" class="sidebar-link active">
+                            <i class="bi bi-journal-richtext"></i> Knowledge
+                        </a>
+                        <a href="crops.html" class="sidebar-link">
+                            <i class="bi bi-flower1"></i> Crops
+                        </a>
+                    </nav>
+                </div>
+                <div>
+                    <p class="sidebar-section-label">Platform</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="settings.html" class="sidebar-link">
+                            <i class="bi bi-gear"></i> Settings
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Main ── -->
+        <div class="d-flex flex-column flex-grow-1 min-w-0">
+
+            <!-- Header -->
+            <header class="bg-white border-bottom d-flex align-items-center justify-content-between px-3 px-lg-4"
+                style="height:64px; z-index:10;">
+                <div class="d-flex align-items-center gap-2">
+                    <button id="mobile-menu-btn" class="btn d-lg-none p-1" style="color:inherit; border:none;">
+                        <i class="bi bi-list fs-3"></i>
+                    </button>
+                    <h2 class="mb-0 fw-bold fs-6 text-dark">Knowledge Base</h2>
+                </div>
+            </header>
+
+            <!-- Scrollable body -->
+            <div id="main-content" class="p-4">
+                <div class="mx-auto w-100" style="max-width:1200px;">
+
+                    <!-- ── AI Auto-Fill Banner ── -->
+                    <div class="mb-4 p-3 rounded-3 border border-success-subtle ai-banner"
+                        style="background: linear-gradient(135deg, #f0fdf4, #ecfdf5);">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span>✨</span>
+                            <span class="fw-bold text-success-emphasis" style="font-size:0.875rem;">AI Article
+                                Generator</span>
+                            <span class="badge-ai">Powered by AI</span>
+                        </div>
+                        <p class="text-success mb-2" style="font-size:12px;">
+                            Enter a farming topic and let AI write a complete educational article for Zambian farmers —
+                            introduction, practical steps, common mistakes, and more. Review before saving.
+                        </p>
+                        <div class="d-flex gap-2">
+                            <input id="ai-topic-input" type="text"
+                                placeholder="e.g. Crop rotation benefits, Composting techniques, Maize storage..."
+                                class="form-control form-control-sm flex-grow-1" style="border-color:#bbf7d0;">
+                            <button id="ai-generate-btn"
+                                class="ai-btn btn btn-sm text-white fw-bold px-3 d-flex align-items-center gap-2 text-nowrap"
+                                onclick="generateArticleWithAI()">
+                                <span id="ai-btn-icon">✨</span>
+                                <span id="ai-btn-text">Generate</span>
+                            </button>
+                        </div>
+                        <p id="ai-status" class="mb-0 mt-2 text-success d-none" style="font-size:12px;"></p>
+                    </div>
+
+                    <div class="row g-4" id="articles-grid">
+                        <!-- Cards injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </div><!-- /main col -->
+    </div><!-- /flex wrapper -->
+
+    <!-- ── Article Editor Modal ── -->
+    <div class="modal fade" id="articleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content modal-green">
+                <div class="modal-header px-4 py-3">
+                    <h5 class="modal-title fw-bold" id="modal-title">Create New Article</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Metadata Form -->
+                    <form id="article-form">
+                        <p class="mb-3 fw-bold text-success text-uppercase"
+                            style="font-size:10px; letter-spacing:0.18em;">Basic Information</p>
+                        <input type="hidden" id="article-id">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label mb-1"
+                                    style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">ID</label>
+                                <input type="number" id="f-id" required class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-9">
+                                <label class="form-label mb-1"
+                                    style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Title</label>
+                                <input type="text" id="f-title" required class="form-control form-control-sm">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label mb-1"
+                                style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Description</label>
+                            <textarea id="f-description" rows="2" class="form-control form-control-sm"></textarea>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label mb-1"
+                                    style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Duration</label>
+                                <input type="text" id="f-duration" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label mb-1"
+                                    style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Icon</label>
+                                <input type="text" id="f-icon" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                    </form>
+
+                    <hr class="my-3" style="border-color:#f1f5f9;">
+
+                    <!-- Content Blocks -->
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <p class="mb-0 fw-bold text-success text-uppercase"
+                            style="font-size:10px; letter-spacing:0.18em;">Article Content</p>
+                        <div class="d-flex gap-2">
+                            <button onclick="addContentBlock('text')" class="btn btn-sm fw-bold"
+                                style="background:#eff6ff; color:#2563eb; font-size:10px; border-radius:0.5rem; border:1px solid #dbeafe;">+
+                                Add Text</button>
+                            <button onclick="addContentBlock('image')" class="btn btn-sm fw-bold"
+                                style="background:#faf5ff; color:#9333ea; font-size:10px; border-radius:0.5rem; border:1px solid #f3e8ff;">+
+                                Add Image</button>
+                        </div>
+                    </div>
+                    <div id="content-blocks" class="dashed-zone d-flex flex-column gap-3">
+                        <!-- Blocks injected here -->
+                    </div>
+                </div>
+                <div class="modal-footer px-4 py-3" style="background:#f8fafc; border-color:#f1f5f9;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-4" data-bs-dismiss="modal"
+                        style="border-radius:0.75rem;">Cancel</button>
+                    <button onclick="saveArticle()" class="btn btn-success btn-sm fw-bold px-4"
+                        style="border-radius:0.75rem;">
+                        <i class="bi bi-floppy me-1"></i> Save Everything
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const SUPABASE_URL = 'https://frcbiyxewkumgawpfsgo.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_Zr2cDjHGalkdXoAdaXbTHw_S_fyxX0r';
+
+        let supabaseClient;
+        try {
+            if (typeof supabase === 'undefined') throw new Error('Supabase not loaded');
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) { alert('Connection Error: ' + e.message); }
+
+        let modules = [];
+        let progress = [];
+        let currentBlocks = [];
+        let articleModalInstance;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            articleModalInstance = new bootstrap.Modal(document.getElementById('articleModal'));
+
+            document.getElementById('ai-topic-input').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); generateArticleWithAI(); }
+            });
+        });
+
+        // ── AI Generate Article ──────────────────────────────────────────
+        async function generateArticleWithAI() {
+            const topic = document.getElementById('ai-topic-input').value.trim();
+            if (!topic) { showAIStatus('Please enter a topic first.', 'error'); return; }
+
+            const btn = document.getElementById('ai-generate-btn');
+            const btnText = document.getElementById('ai-btn-text');
+            btn.disabled = true;
+            document.getElementById('ai-btn-icon').innerHTML = '<span class="spinner-sm"></span>';
+            btnText.textContent = 'Generating...';
+            showAIStatus(`Generating article about "${topic}"...`, 'loading');
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-article`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({ topic })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || `Server error ${response.status}`);
+                }
+
+                const article = await response.json();
+                fillArticleModal(article);
+                showAIStatus(`✅ Article generated — review content and save when ready.`, 'success');
+
+            } catch (err) {
+                console.error('AI generation error:', err);
+                showAIStatus(`❌ ${err.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                document.getElementById('ai-btn-icon').textContent = '✨';
+                btnText.textContent = 'Generate';
+            }
+        }
+
+        function fillArticleModal(article) {
+            // Reset the modal
+            document.getElementById('article-form').reset();
+            document.getElementById('article-id').value = '';
+            document.getElementById('f-id').disabled = false;
+            document.getElementById('content-blocks').innerHTML = '';
+            currentBlocks = [];
+
+            // Set next ID
+            const nextId = modules.length > 0 ? Math.max(...modules.map(m => m.id)) + 1 : 1;
+            document.getElementById('f-id').value = nextId;
+            document.getElementById('modal-title').innerText = 'New Knowledge Module';
+
+            // Fill metadata fields with animation
+            const fieldMap = {
+                'f-title': article.title,
+                'f-description': article.description,
+                'f-duration': article.duration,
+                'f-icon': article.icon
+            };
+
+            let delay = 0;
+            for (const [id, value] of Object.entries(fieldMap)) {
+                if (value === null || value === undefined || value === '') continue;
+                setTimeout(() => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    el.value = value;
+                    el.classList.add('field-filled');
+                    setTimeout(() => el.classList.remove('field-filled'), 1200);
+                }, delay);
+                delay += 80;
+            }
+
+            // Fill content blocks with staggered animation
+            if (article.paragraphs && Array.isArray(article.paragraphs)) {
+                article.paragraphs.forEach((p, i) => {
+                    setTimeout(() => {
+                        addContentBlock(p.type || 'text', p.content || p.paragraph || '');
+                    }, delay + (i * 100));
+                });
+            }
+
+            // Show the modal after a small delay so fields animate in
+            setTimeout(() => {
+                articleModalInstance.show();
+            }, delay + 200);
+        }
+
+        function showAIStatus(msg, type) {
+            const el = document.getElementById('ai-status');
+            el.textContent = msg;
+            el.className = 'mb-0 mt-2';
+            el.style.fontSize = '12px';
+            if (type === 'success') { el.classList.add('text-success', 'fw-semibold'); }
+            else if (type === 'error') { el.classList.add('text-danger', 'fw-semibold'); }
+            else { el.classList.add('text-success'); }
+            el.classList.remove('d-none');
+        }
+
+        async function loadArticles() {
+            if (!supabaseClient) return;
+            try {
+                const { data: mData } = await supabaseClient.from('educational_modules').select('*').order('id', { ascending: true });
+                const { data: pData } = await supabaseClient.from('learning_progress').select('*');
+                modules = mData || [];
+                progress = pData || [];
+                renderArticles();
+            } catch (err) { console.error(err); }
+        }
+
+        function renderArticles() {
+            const grid = document.getElementById('articles-grid');
+            if (modules.length === 0) {
+                grid.innerHTML = `<div class="col-12"><div class="text-center p-5 bg-white border rounded-4" style="border-color:#f1f5f9 !important;"><p class="text-muted mb-0">No articles found.</p></div></div>`;
+                return;
+            }
+            grid.innerHTML = modules.map(m => {
+                const completions = progress.filter(p => p.module_id === m.id && p.completed).length;
+                return `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="article-card d-flex flex-column h-100">
+                            <div class="card-actions d-flex gap-2">
+                                <button onclick="openArticleModal(${m.id})" class="btn btn-sm border" style="background:#fff; color:#2563eb; border-radius:0.75rem; border-color:#dbeafe !important;">
+                                    <i class="bi bi-pencil" style="font-size:0.75rem;"></i>
+                                </button>
+                                <button onclick="deleteArticle(${m.id})" class="btn btn-sm border" style="background:#fff; color:#dc2626; border-radius:0.75rem; border-color:#fecaca !important;">
+                                    <i class="bi bi-trash" style="font-size:0.75rem;"></i>
+                                </button>
+                            </div>
+                            <div class="article-icon mb-3">${m.icon || '📄'}</div>
+                            <h6 class="fw-bold text-dark mb-1">${m.title}</h6>
+                            <div class="mb-3">
+                                <span class="badge" style="background:#f8fafc; color:#94a3b8; font-size:10px; font-weight:700; border:1px solid #f1f5f9; border-radius:20px;">${m.duration || 'Short read'}</span>
+                            </div>
+                            <p class="text-muted flex-grow-1" style="font-size:0.8rem; line-height:1.6;">${m.description || '...'}</p>
+                            <div class="pt-3 mt-auto border-top d-flex align-items-center justify-content-between" style="border-color:#f8fafc !important;">
+                                <span class="text-muted text-uppercase" style="font-size:10px; font-weight:700; letter-spacing:0.08em;">Activity</span>
+                                <span class="fw-bold text-success" style="font-size:0.8rem;">${completions} users read</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function openArticleModal(id = null) {
+            document.getElementById('article-form').reset();
+            document.getElementById('article-id').value = '';
+            document.getElementById('f-id').disabled = false;
+            document.getElementById('content-blocks').innerHTML = '';
+            currentBlocks = [];
+
+            if (id) {
+                const article = modules.find(m => m.id === id);
+                document.getElementById('article-id').value = article.id;
+                document.getElementById('f-id').value = article.id;
+                document.getElementById('f-id').disabled = true;
+                document.getElementById('f-title').value = article.title;
+                document.getElementById('f-description').value = article.description;
+                document.getElementById('f-duration').value = article.duration;
+                document.getElementById('f-icon').value = article.icon;
+                document.getElementById('modal-title').innerText = 'Edit Content';
+
+                const { data: paragraphs } = await supabaseClient
+                    .from('educational_module_paragraphs')
+                    .select('*')
+                    .eq('module_id', id)
+                    .order('order_index', { ascending: true });
+
+                (paragraphs || []).forEach(p => addContentBlock(p.type, p.paragraph || p.image_url));
+            } else {
+                document.getElementById('modal-title').innerText = 'New Knowledge Module';
+                const nextId = modules.length > 0 ? Math.max(...modules.map(m => m.id)) + 1 : 1;
+                document.getElementById('f-id').value = nextId;
+            }
+
+            articleModalInstance.show();
+        }
+
+        function addContentBlock(type, value = '') {
+            const container = document.getElementById('content-blocks');
+            const blockId = Date.now() + Math.random();
+            const div = document.createElement('div');
+            div.id = `block-${blockId}`;
+            div.className = 'content-block';
+
+            const contentHtml = type === 'text'
+                ? `<textarea class="form-control form-control-sm border-0 bg-transparent p-0" placeholder="Enter paragraph text..." oninput="updateBlock('${blockId}', this.value)" style="resize:none; font-size:0.85rem;">${value}</textarea>`
+                : `<div class="d-flex align-items-center gap-2">
+                    <span style="font-size:1.1rem;">🖼️</span>
+                    <input type="text" value="${value}" placeholder="Paste Image URL..." class="form-control form-control-sm border-0 bg-transparent p-0" oninput="updateBlock('${blockId}', this.value)" style="font-size:0.85rem;">
+                   </div>`;
+
+            div.innerHTML = `
+                <div class="block-delete" onclick="removeBlock('${blockId}')">✕</div>
+                <p class="mb-2 text-muted text-uppercase" style="font-size:8px; font-weight:700; letter-spacing:0.15em;">${type}</p>
+                ${contentHtml}
+            `;
+
+            container.appendChild(div);
+            currentBlocks.push({ id: blockId, type, content: value });
+        }
+
+        function updateBlock(id, val) {
+            const block = currentBlocks.find(b => b.id.toString() === id.toString());
+            if (block) block.content = val;
+        }
+
+        function removeBlock(id) {
+            document.getElementById(`block-${id}`).remove();
+            currentBlocks = currentBlocks.filter(b => b.id.toString() !== id.toString());
+        }
+
+        async function saveArticle() {
+            const idVal = document.getElementById('f-id').value;
+            const title = document.getElementById('f-title').value;
+            const isEdit = !!document.getElementById('article-id').value;
+
+            if (!idVal || !title) return alert('ID and Title are required');
+            const id = parseInt(idVal);
+
+            const moduleData = {
+                id: id,
+                title,
+                description: document.getElementById('f-description').value,
+                duration: document.getElementById('f-duration').value,
+                icon: document.getElementById('f-icon').value
+            };
+
+            try {
+                let mError;
+                if (isEdit) {
+                    ({ error: mError } = await supabaseClient.from('educational_modules').update(moduleData).eq('id', id));
+                } else {
+                    if (modules.some(m => m.id === id)) {
+                        throw new Error(`ID ${id} already exists. Please use the suggested ID or another unique number.`);
+                    }
+                    ({ error: mError } = await supabaseClient.from('educational_modules').insert([moduleData]));
+                }
+
+                if (mError) throw mError;
+
+                if (isEdit) await supabaseClient.from('educational_module_paragraphs').delete().eq('module_id', id);
+
+                const paragraphData = currentBlocks.map((b, index) => ({
+                    module_id: parseInt(id),
+                    order_index: index,
+                    type: b.type,
+                    paragraph: b.type === 'text' ? b.content : '',
+                    image_url: b.type === 'image' ? b.content : ''
+                }));
+
+                if (paragraphData.length > 0) {
+                    const { error: pError } = await supabaseClient.from('educational_module_paragraphs').insert(paragraphData);
+                    if (pError) throw pError;
+                }
+
+                articleModalInstance.hide();
+                loadArticles();
+            } catch (err) { alert('Save Failed: ' + err.message); }
+        }
+
+        async function deleteArticle(id) {
+            if (!confirm('Delete this article and all its content?')) return;
+            try {
+                await supabaseClient.from('educational_modules').delete().eq('id', id);
+                loadArticles();
+            } catch (err) { alert(err.message); }
+        }
+
+        loadArticles();
+    </script>
+    <!-- Mobile Menu Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            if (mobileMenuBtn && sidebar && sidebarOverlay) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.add('show');
+                    sidebarOverlay.classList.add('show');
+                });
+                
+                sidebarOverlay.addEventListener('click', () => {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

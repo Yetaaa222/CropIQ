@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CropIQ Admin | Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="assets/logo.png" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script>
+        if (localStorage.getItem('admin-theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: #ffffff;
+            border-right: 1px solid #f1f5f9;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #4ade80, #16a34a);
+            border-radius: 14px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.25);
+        }
+
+        .sidebar-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            padding: 0 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 1rem;
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(240, 253, 244, 0.9);
+            color: #15803d;
+            transform: translateX(4px);
+        }
+
+        .sidebar-link.active {
+            background-color: #16a34a;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.35);
+            transform: translateX(8px);
+        }
+
+        .glass-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1rem;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 30px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .status-pill {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 20px;
+        }
+
+        .status-pill.connecting {
+            background-color: #fff7ed;
+            color: #ea580c;
+        }
+
+        .status-pill.live {
+            background-color: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .status-pill.offline {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        #main-content {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .panel-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(6px);
+            z-index: 1040;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .panel-backdrop.show {
+            opacity: 1;
+        }
+
+        .slide-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 100%;
+            max-width: 500px;
+            background-color: #f8fafc;
+            z-index: 1050;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -20px 0 50px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        .slide-panel.show {
+            transform: translateX(0);
+        }
+
+        .panel-header {
+            position: relative;
+            height: 190px;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            overflow: hidden;
+        }
+
+        .panel-header::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 250px;
+            height: 250px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            filter: blur(40px);
+        }
+
+        .panel-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 1.25rem;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.75rem;
+            color: #16a34a;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .stat-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1.25rem;
+            padding: 1rem;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+        }
+
+        .crop-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: #f0fdf4;
+            color: #15803d;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid #dcfce7;
+        }
+
+        .farm-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1.25rem;
+            padding: 1rem;
+        }
+
+        /* ── Dark Mode Styles ── */
+        html.dark-mode body {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode #sidebar {
+            background: #1e293b !important;
+            border-right-color: #334155 !important;
+        }
+
+        html.dark-mode .sidebar-brand-icon {
+            box-shadow: 0 8px 20px -4px rgba(34, 197, 94, 0.15) !important;
+        }
+
+        html.dark-mode .sidebar-link {
+            color: #94a3b8 !important;
+        }
+
+        html.dark-mode .sidebar-link:hover {
+            background-color: rgba(34, 197, 94, 0.1) !important;
+            color: #4ade80 !important;
+        }
+
+        html.dark-mode .sidebar-link.active {
+            background-color: #16a34a !important;
+            color: #fff !important;
+        }
+
+        html.dark-mode header {
+            background-color: #1e293b !important;
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode header h2,
+        html.dark-mode header h5 {
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .glass-card,
+        html.dark-mode .settings-card,
+        html.dark-mode .stat-card,
+        html.dark-mode .farm-card,
+        html.dark-mode .bg-white.border,
+        html.dark-mode .crop-card {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .text-dark {
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .text-muted {
+            color: #94a3b8 !important;
+        }
+
+        html.dark-mode .form-control {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .form-control::placeholder {
+            color: #64748b !important;
+        }
+
+        html.dark-mode .form-control:focus {
+            border-color: #22c55e !important;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
+        }
+
+        html.dark-mode .form-select {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .table {
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .table th {
+            background-color: #1e293b !important;
+            color: #94a3b8 !important;
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode .table td {
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode .table tbody tr:hover {
+            background-color: rgba(34, 197, 94, 0.08) !important;
+        }
+
+        html.dark-mode .table-responsive,
+        html.dark-mode .border,
+        html.dark-mode .border-bottom,
+        html.dark-mode .border-top,
+        html.dark-mode .border-start,
+        html.dark-mode .border-end {
+            border-color: #334155 !important;
+        }
+
+        html.dark-mode .form-control[readonly] {
+            background-color: #0f172a !important;
+            color: #94a3b8 !important;
+        }
+
+        html.dark-mode .user-avatar {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+
+        html.dark-mode tr:hover .user-avatar {
+            background-color: rgba(34, 197, 94, 0.2) !important;
+            color: #4ade80 !important;
+        }
+
+        html.dark-mode .slide-panel {
+            background-color: #0f172a !important;
+            box-shadow: -20px 0 50px -10px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        html.dark-mode .modal-content {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+
+        html.dark-mode .modal-header {
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode .modal-footer {
+            border-top-color: #334155 !important;
+        }
+
+        html.dark-mode .btn-close {
+            filter: invert(1) !important;
+        }
+
+        html.dark-mode .ai-banner {
+            background: linear-gradient(135deg, #064e3b, #022c22) !important;
+            border-color: #047857 !important;
+        }
+
+        html.dark-mode .text-success-emphasis {
+            color: #a7f3d0 !important;
+        }
+
+        html.dark-mode .text-success {
+            color: #4ade80 !important;
+        }
+
+        html.dark-mode .badge-ai {
+            background-color: #064e3b !important;
+            color: #6ee7b7 !important;
+        }
+
+        html.dark-mode .toggle-track {
+            background-color: #334155 !important;
+        }
+
+        html.dark-mode .toggle-track.active {
+            background-color: #22c55e !important;
+        }
+
+        html.dark-mode code.bg-light,
+        html.dark-mode .bg-light {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+
+        /* ── Mobile Sidebar Styles ── */
+        @media (max-width: 991.98px) {
+            #sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                bottom: 0;
+                z-index: 1045;
+                transition: left 0.3s ease;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+                display: flex !important;
+            }
+            #sidebar.show {
+                left: 0;
+            }
+        }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1040;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="d-flex" style="height: 100vh;">
+        <!-- ── Sidebar ── -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <aside id="sidebar" class="flex-column">
+            <div class="p-4 pb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="sidebar-brand-icon">🌱</div>
+                    <div>
+                        <div class="fw-bold fs-6 text-dark lh-1">CropIQ</div>
+                        <div class="text-uppercase text-success opacity-75"
+                            style="font-size:10px; letter-spacing:0.18em; font-weight:700;">Intelligence</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-grow-1 px-3 d-flex flex-column gap-4 overflow-auto pb-4" style="font-size:0.875rem;">
+                <div>
+                    <p class="sidebar-section-label">Core Insights</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="admin.html" class="sidebar-link active"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                    </nav>
+                </div>
+                <div>
+                    <p class="sidebar-section-label">Operations</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="users.html" class="sidebar-link"><i class="bi bi-people"></i> Farmers</a>
+                        <a href="articles.html" class="sidebar-link"><i class="bi bi-journal-richtext"></i>
+                            Knowledge</a>
+                        <a href="crops.html" class="sidebar-link"><i class="bi bi-flower1"></i> Crops</a>
+                    </nav>
+                </div>
+                <div>
+                    <p class="sidebar-section-label">Platform</p>
+                    <nav class="d-flex flex-column gap-1">
+                        <a href="settings.html" class="sidebar-link"><i class="bi bi-gear"></i> Settings</a>
+                    </nav>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Main ── -->
+        <div class="d-flex flex-column flex-grow-1 min-w-0">
+            <!-- Header -->
+            <header class="bg-white border-bottom d-flex align-items-center justify-content-between px-3 px-lg-4"
+                style="height:64px; z-index:10;">
+                <div class="d-flex align-items-center gap-2">
+                    <button id="mobile-menu-btn" class="btn d-lg-none p-1" style="color:inherit; border:none;">
+                        <i class="bi bi-list fs-3"></i>
+                    </button>
+                    <div>
+                        <h2 class="mb-0 fw-bold fs-6 text-dark">Analytics Overview</h2>
+                        <p class="mb-0 text-muted" style="font-size:0.75rem;">Welcome back, Admin</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span id="connection-status" class="status-pill connecting">Connecting...</span>
+                    <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold"
+                        style="width:32px;height:32px;background:#dcfce7;color:#15803d;font-size:0.75rem;">AD</div>
+                </div>
+            </header>
+
+            <!-- Scrollable body -->
+            <div id="main-content" class="p-4">
+                <!-- Summary Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="stat-icon" style="background:#eff6ff;color:#3b82f6;">👥</div>
+                                <span class="badge"
+                                    style="background:#f0fdf4;color:#16a34a;font-size:11px;font-weight:600;border-radius:6px;">+12%</span>
+                            </div>
+                            <p class="text-muted mb-1" style="font-size:0.875rem;">Total Users</p>
+                            <p id="total-users" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="stat-icon" style="background:#f0fdf4;color:#16a34a;">🚜</div>
+                                <span class="badge"
+                                    style="background:#f8fafc;color:#94a3b8;font-size:11px;font-weight:600;border-radius:6px;">Stable</span>
+                            </div>
+                            <p class="text-muted mb-1" style="font-size:0.875rem;">Total Farms</p>
+                            <p id="total-farms" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="stat-icon" style="background:#faf5ff;color:#a855f7;">📖</div>
+                                <span class="badge"
+                                    style="background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:600;border-radius:6px;">+8%</span>
+                            </div>
+                            <p class="text-muted mb-1" style="font-size:0.875rem;">Articles Read</p>
+                            <p id="total-reads" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="stat-icon" style="background:#fff7ed;color:#f97316;">🌱</div>
+                                <span class="badge"
+                                    style="background:#fff7ed;color:#f97316;font-size:11px;font-weight:600;border-radius:6px;">Avg</span>
+                            </div>
+                            <p class="text-muted mb-1" style="font-size:0.875rem;">Avg. Crops/User</p>
+                            <p id="avg-crops" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-lg-8">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="fw-bold text-dark mb-0">Top Selected Crops</h6>
+                                <select class="form-select form-select-sm"
+                                    style="width:auto;font-size:0.75rem;border-radius:0.5rem;">
+                                    <option>Last 30 Days</option>
+                                    <option>All Time</option>
+                                </select>
+                            </div>
+                            <div style="height:300px;"><canvas id="cropsChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="glass-card p-4">
+                            <h6 class="fw-bold text-dark mb-3 text-center">User Locations</h6>
+                            <div style="height:240px;"><canvas id="locationChart"></canvas></div>
+                            <div id="location-legend" class="mt-3 d-flex flex-column gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row -->
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="glass-card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="fw-bold text-dark mb-0">Recent Onboarding</h6>
+                                <span class="text-muted text-uppercase"
+                                    style="font-size:10px;font-weight:600;letter-spacing:0.06em;">Click to view</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-borderless mb-0" style="font-size:0.85rem;">
+                                    <thead>
+                                        <tr class="text-muted border-bottom">
+                                            <th class="fw-medium pb-2">User</th>
+                                            <th class="fw-medium pb-2">Province</th>
+                                            <th class="fw-medium pb-2">Status</th>
+                                            <th class="fw-medium pb-2">Joined</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recent-users-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="glass-card p-4">
+                            <h6 class="fw-bold text-dark mb-0">Article Performance</h6>
+                            <div style="height:280px;"><canvas id="articlesChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RLS Warning -->
+                <div id="rls-warning" class="mt-4 p-3 rounded-3 d-none"
+                    style="background:#fffbeb; border:1px solid #fef3c7;">
+                    <div class="d-flex gap-3">
+                        <span style="font-size:1.25rem;">💡</span>
+                        <div>
+                            <p class="fw-bold mb-1" style="font-size:0.875rem; color:#92400e;">Action Required:
+                                Permissions</p>
+                            <p class="mb-0" style="font-size:0.8rem; color:#a16207;">If no data is appearing, apply the
+                                RLS policies from <code class="bg-white px-1 rounded">admin_setup_policies.sql</code> to
+                                your Supabase project.</p>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /main-content -->
+        </div><!-- /main col -->
+    </div><!-- /flex wrapper -->
+
+    <!-- ── User Profile Slide-over ── -->
+    <div id="user-panel-backdrop" class="panel-backdrop d-none" onclick="closeUserPanel()"></div>
+    <div id="user-panel" class="slide-panel">
+        <div class="panel-header">
+            <div class="d-flex justify-content-between align-items-start position-relative mb-3" style="z-index:2;">
+                <button onclick="closeUserPanel()" class="btn btn-sm text-white"
+                    style="background:rgba(0,0,0,0.2); border-radius:0.75rem; padding:0.4rem 0.6rem;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+                <span class="badge text-white"
+                    style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.2); font-size:10px; letter-spacing:0.12em; text-transform:uppercase; border-radius:20px; padding:4px 12px;">User
+                    Profile</span>
+            </div>
+            <div class="d-flex align-items-center gap-3 position-relative" style="z-index:2;">
+                <div class="panel-avatar" id="u-avatar">?</div>
+                <div class="text-white">
+                    <h5 id="u-name" class="fw-bold mb-1 lh-1" style="font-size:1.35rem;">User Name</h5>
+                    <p id="u-id" class="mb-0 opacity-75" style="font-size:11px; font-family:monospace;">ID: ...</p>
+                </div>
+            </div>
+        </div>
+        <div class="flex-grow-1 overflow-auto p-4">
+            <div class="row g-3 mb-4">
+                <div class="col-6">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center gap-2 mb-2"><span>🗺️</span><span
+                                class="stat-label">Province</span></div>
+                        <p id="u-province" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center gap-2 mb-2"><span>📐</span><span class="stat-label">Farm
+                                Size</span></div>
+                        <p id="u-farm-size" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center gap-2 mb-2"><span>⏳</span><span
+                                class="stat-label">Experience</span></div>
+                        <p id="u-experience" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">0 Years</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center gap-2 mb-2"><span>🧪</span><span class="stat-label">Soil
+                                Type</span></div>
+                        <p id="u-soil" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2"><span
+                            class="d-flex align-items-center justify-content-center rounded-3"
+                            style="width:32px;height:32px;background:#dcfce7;color:#16a34a;font-size:0.875rem;">🌿</span>Interests
+                    </h6>
+                    <span id="u-crops-count" class="badge bg-light text-secondary"
+                        style="font-size:10px;font-weight:700;">0 Crops</span>
+                </div>
+                <div id="u-crops" class="d-flex flex-wrap gap-2"></div>
+            </div>
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"><span
+                        class="d-flex align-items-center justify-content-center rounded-3"
+                        style="width:32px;height:32px;background:#dbeafe;color:#2563eb;font-size:0.875rem;">📍</span>Registered
+                    Farms</h6>
+                <div id="u-farms-list" class="d-flex flex-column gap-2"></div>
+            </div>
+            <div>
+                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"><span
+                        class="d-flex align-items-center justify-content-center rounded-3"
+                        style="width:32px;height:32px;background:#ffedd5;color:#ea580c;font-size:0.875rem;">✨</span>Recent
+                    Activity</h6>
+                <div id="u-recs-list" class="bg-white border rounded-4 overflow-hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://frcbiyxewkumgawpfsgo.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_Zr2cDjHGalkdXoAdaXbTHw_S_fyxX0r';
+
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function fetchAnalytics() {
+            const statusEl = document.getElementById('connection-status');
+
+            try {
+                const { data: users, error: userError } = await supabaseClient
+                    .from('user_profiles')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (userError) throw userError;
+
+                const { data: farms, error: farmError } = await supabaseClient.from('farms').select('*');
+                if (farmError) throw farmError;
+
+                const { data: progress, error: progressError } = await supabaseClient
+                    .from('learning_progress')
+                    .select('*, educational_modules(title)')
+                    .eq('completed', true);
+
+                if (progressError) throw progressError;
+
+                updateDashboard(users, farms, progress);
+                statusEl.textContent = 'Live Data';
+                statusEl.className = 'status-pill live';
+
+                if (users.length === 0) document.getElementById('rls-warning').classList.remove('d-none');
+
+            } catch (error) {
+                console.error(error);
+                statusEl.textContent = 'Offline';
+                statusEl.className = 'status-pill offline';
+                document.getElementById('rls-warning').classList.remove('d-none');
+            }
+        }
+
+        function updateDashboard(users, farms, progress) {
+            document.getElementById('total-users').innerText = users.length.toLocaleString();
+            document.getElementById('total-farms').innerText = farms.length.toLocaleString();
+            document.getElementById('total-reads').innerText = progress.length.toLocaleString();
+
+            let totalCropsCount = 0;
+            const cropCounts = {};
+            const provinceCounts = {};
+
+            users.forEach(u => {
+                const selected = u.selected_crops || [];
+                totalCropsCount += selected.length;
+                selected.forEach(c => cropCounts[c] = (cropCounts[c] || 0) + 1);
+                if (u.province) provinceCounts[u.province] = (provinceCounts[u.province] || 0) + 1;
+            });
+
+            document.getElementById('avg-crops').innerText = users.length ? (totalCropsCount / users.length).toFixed(1) : 0;
+
+            const tableBody = document.getElementById('recent-users-table');
+            tableBody.innerHTML = users.slice(0, 10).map(u => `
+                <tr style="cursor:pointer;" onclick="openUserPanel('${u.id}')">
+                    <td class="py-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold user-avatar" style="width:32px;height:32px;font-size:0.75rem;">${u.full_name.charAt(0)}</div>
+                            <span class="fw-semibold text-dark">${u.full_name}</span>
+                        </div>
+                    </td>
+                    <td class="py-2 text-muted">${u.province || '—'}</td>
+                    <td class="py-2"><span class="badge" style="background:#f0fdf4;color:#16a34a;font-size:10px;font-weight:700;text-transform:uppercase;border-radius:6px;">Active</span></td>
+                    <td class="py-2 text-muted" style="font-size:0.8rem;">${new Date(u.created_at).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+
+            renderCropsChart(cropCounts);
+            renderLocationChart(provinceCounts);
+            renderArticlesChart(progress);
+        }
+
+        async function openUserPanel(userId) {
+            const panel = document.getElementById('user-panel');
+            const backdrop = document.getElementById('user-panel-backdrop');
+
+            // Show panel loading state
+            backdrop.classList.remove('d-none');
+            setTimeout(() => { backdrop.classList.add('show'); panel.classList.add('show'); }, 10);
+
+            try {
+                // Fetch User Details in parallel
+                const [pRes, fRes, rRes] = await Promise.all([
+                    supabaseClient.from('user_profiles').select('*').eq('id', userId).single(),
+                    supabaseClient.from('farms').select('*').eq('user_id', userId),
+                    supabaseClient.from('crop_recommendations').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5)
+                ]);
+
+                const profile = pRes.data;
+                const farms = fRes.data;
+                const recs = rRes.data;
+
+                // Fill Data
+                document.getElementById('u-name').innerText = profile.full_name;
+                document.getElementById('u-id').innerText = `ID: ${profile.id}`;
+                document.getElementById('u-avatar').innerText = profile.full_name.charAt(0);
+                document.getElementById('u-province').innerText = profile.province || 'Not set';
+                document.getElementById('u-farm-size').innerText = profile.farm_size || 'Not set';
+                document.getElementById('u-experience').innerText = `${profile.experience_years || 0} Years`;
+                document.getElementById('u-soil').innerText = profile.soil_type || 'Not set';
+
+                // Crops
+                const cropHtml = (profile.selected_crops || []).map(c => `
+                    <span class="crop-tag">${c}</span>
+                `).join('');
+                document.getElementById('u-crops').innerHTML = cropHtml || '<p class="text-muted fst-italic" style="font-size:0.8rem;">No crops selected</p>';
+
+                // Farms
+                const farmHtml = farms.map(f => `
+                    <div class="farm-card">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <p class="fw-bold text-dark mb-0" style="font-size:0.875rem;">${f.name}</p>
+                            <span class="badge" style="background:#eff6ff;color:#2563eb;font-size:10px;font-weight:700;text-transform:uppercase;border-radius:20px;">${f.province}</span>
+                        </div>
+                        <p class="text-muted mb-0" style="font-size:10px;font-family:monospace;">Coords: ${f.latitude.toFixed(4)}, ${f.longitude.toFixed(4)}</p>
+                    </div>
+                `).join('');
+                document.getElementById('u-farms-list').innerHTML = farmHtml || '<p class="text-muted fst-italic" style="font-size:0.8rem;">No farms recorded</p>';
+
+                // Recommendations
+                const recHtml = recs.map(r => `
+                    <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
+                        <div>
+                            <p class="fw-bold text-dark mb-0" style="font-size:0.875rem;">${r.crop_name}</p>
+                            <p class="text-muted mb-0" style="font-size:10px;">${new Date(r.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div class="text-end">
+                            <p class="fw-bold text-success mb-0" style="font-size:0.8rem;">${r.suitability_score}%</p>
+                            <p class="text-muted mb-0" style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;">Score</p>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('u-recs-list').innerHTML = recHtml || '<p class="text-muted fst-italic text-center p-3" style="font-size:0.8rem;">No recommendations yet</p>';
+
+            } catch (err) {
+                console.error('Error loading profile:', err);
+                alert('Failed to load user profile. Please check RLS policies.');
+            }
+        }
+
+        function closeUserPanel() {
+            const panel = document.getElementById('user-panel');
+            const backdrop = document.getElementById('user-panel-backdrop');
+            panel.classList.remove('show');
+            backdrop.classList.remove('show');
+            setTimeout(() => backdrop.classList.add('d-none'), 300);
+        }
+
+        function renderCropsChart(counts) {
+            const ctx = document.getElementById('cropsChart').getContext('2d');
+            const sortedLabels = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 6);
+            const isDark = document.documentElement.classList.contains('dark-mode');
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedLabels,
+                    datasets: [{
+                        label: 'Interests',
+                        data: sortedLabels.map(l => counts[l]),
+                        backgroundColor: '#16a34a',
+                        hoverBackgroundColor: '#15803d',
+                        borderRadius: 8,
+                        barThickness: 32
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            border: { display: false },
+                            grid: { color: isDark ? '#334155' : '#f1f5f9' },
+                            ticks: { stepSize: 1, color: isDark ? '#94a3b8' : '#94a3b8' }
+                        },
+                        x: {
+                            border: { display: false },
+                            grid: { display: false },
+                            ticks: { color: isDark ? '#cbd5e1' : '#64748b', font: { weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderLocationChart(counts) {
+            const ctx = document.getElementById('locationChart').getContext('2d');
+            const data = Object.values(counts);
+            const labels = Object.keys(counts);
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const colors = isDark
+                ? ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0']
+                : ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'];
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        cutout: '75%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const legendEl = document.getElementById('location-legend');
+            legendEl.innerHTML = labels.map((l, i) => `
+                <div class="d-flex align-items-center justify-content-between" style="font-size:0.8rem;">
+                    <div class="d-flex align-items-center gap-2 text-muted">
+                        <span class="rounded-circle d-inline-block" style="width:8px;height:8px;background:${colors[i % colors.length]}"></span>
+                        ${l}
+                    </div>
+                    <span class="fw-bold text-dark">${data[i]}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderArticlesChart(progress) {
+            const ctx = document.getElementById('articlesChart').getContext('2d');
+            const articleCounts = {};
+            progress.forEach(p => {
+                const title = p.educational_modules?.title || 'Unknown';
+                articleCounts[title] = (articleCounts[title] || 0) + 1;
+            });
+            const isDark = document.documentElement.classList.contains('dark-mode');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(articleCounts),
+                    datasets: [{
+                        label: 'Completions',
+                        data: Object.values(articleCounts),
+                        borderColor: '#16a34a',
+                        backgroundColor: (context) => {
+                            const chart = context.chart;
+                            const { ctx, chartArea } = chart;
+                            if (!chartArea) return null;
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            gradient.addColorStop(0, 'rgba(22, 163, 74, 0)');
+                            gradient.addColorStop(1, isDark ? 'rgba(22, 163, 74, 0.2)' : 'rgba(22, 163, 74, 0.1)');
+                            return gradient;
+                        },
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: isDark ? '#1e293b' : '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            border: { display: false },
+                            grid: { color: isDark ? '#334155' : '#f1f5f9' },
+                            ticks: { color: isDark ? '#94a3b8' : '#94a3b8' }
+                        },
+                        x: {
+                            border: { display: false },
+                            grid: { display: false },
+                            ticks: { color: isDark ? '#94a3b8' : '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        const CROP_IMAGE_BUCKETS = ['crop-images', 'crops', 'profile_pictures'];
+
+        const getNumberOrNull = (value) => {
+            if (value === '' || value === null || value === undefined) return null;
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+        };
+
+        async function uploadCropImage(file, cropName) {
+            if (!file) return { image_path: null, image_url: null };
+
+            const safeName = (cropName || 'crop')
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
+            const extension = (file.name.split('.').pop() || 'jpg').toLowerCase();
+            const filePath = `crops/${safeName || 'crop'}-${Date.now()}.${extension}`;
+
+            let lastError = null;
+            for (const bucket of CROP_IMAGE_BUCKETS) {
+                const { error } = await supabaseClient.storage
+                    .from(bucket)
+                    .upload(filePath, file, {
+                        upsert: false,
+                        cacheControl: '3600',
+                        contentType: file.type || 'image/jpeg'
+                    });
+
+                if (!error) {
+                    const { data } = supabaseClient.storage.from(bucket).getPublicUrl(filePath);
+                    return { image_path: filePath, image_url: data.publicUrl };
+                }
+
+                lastError = error;
+                if (!(error.message || '').toLowerCase().includes('bucket not found')) break;
+            }
+
+            throw lastError || new Error('Failed to upload crop image');
+        }
+
+        async function createCropFromAdmin(form) {
+            const name = document.getElementById('crop-name').value.trim();
+            const fullName = document.getElementById('crop-full-name').value.trim();
+            const category = document.getElementById('crop-category').value.trim();
+            const imageFile = document.getElementById('crop-image-file').files[0];
+
+            if (!name || !fullName || !category) {
+                throw new Error('Name, full name, and category are required');
+            }
+
+            const { data: maxCrop, error: maxErr } = await supabaseClient
+                .from('crops')
+                .select('id')
+                .order('id', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (maxErr) throw maxErr;
+
+            const nextId = (maxCrop?.id || 0) + 1;
+            const uploadedImage = await uploadCropImage(imageFile, name);
+            const diseasesInput = document.getElementById('crop-common-diseases').value.trim();
+            const commonDiseases = diseasesInput
+                ? diseasesInput.split(',').map(s => s.trim()).filter(Boolean)
+                : null;
+
+            const payload = {
+                id: nextId,
+                name,
+                full_name: fullName,
+                category,
+                short_description: document.getElementById('crop-short-description').value.trim() || null,
+                description: document.getElementById('crop-description').value.trim() || null,
+                temp_range_min: getNumberOrNull(document.getElementById('crop-temp-min').value),
+                temp_range_max: getNumberOrNull(document.getElementById('crop-temp-max').value),
+                rainfall_min: getNumberOrNull(document.getElementById('crop-rainfall-min').value),
+                rainfall_max: getNumberOrNull(document.getElementById('crop-rainfall-max').value),
+                humidity_min: getNumberOrNull(document.getElementById('crop-humidity-min').value),
+                humidity_max: getNumberOrNull(document.getElementById('crop-humidity-max').value),
+                soil_type: document.getElementById('crop-soil-type').value.trim() || null,
+                water_needs: document.getElementById('crop-water-needs').value.trim() || null,
+                growing_months: document.getElementById('crop-growing-months').value.trim() || null,
+                common_diseases: commonDiseases,
+                management_practices: document.getElementById('crop-management-practices').value.trim() || null,
+                image_path: uploadedImage.image_path,
+                image_url: uploadedImage.image_url
+            };
+
+            const { error: insertErr } = await supabaseClient.from('crops').insert(payload);
+            if (insertErr) throw insertErr;
+
+            form.reset();
+        }
+
+        function initAddCropForm() {
+            const form = document.getElementById('add-crop-form');
+            const status = document.getElementById('add-crop-status');
+            const submitBtn = document.getElementById('add-crop-submit');
+            if (!form || !status || !submitBtn) return;
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                submitBtn.disabled = true;
+                status.className = 'text-muted';
+                status.style.fontSize = '12px';
+                status.textContent = 'Saving crop...';
+
+                try {
+                    await createCropFromAdmin(form);
+                    status.className = 'text-success fw-semibold';
+                    status.style.fontSize = '12px';
+                    status.textContent = 'Crop saved successfully.';
+                    await fetchAnalytics();
+                } catch (error) {
+                    console.error('Error creating crop from admin:', error);
+                    status.className = 'text-danger fw-semibold';
+                    status.style.fontSize = '12px';
+                    status.textContent = `Failed: ${error.message || 'Could not save crop'}`;
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        initAddCropForm();
+        fetchAnalytics();
+    </script>
+
+    <!-- Bootstrap 5 JS bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Mobile Menu Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            if (mobileMenuBtn && sidebar && sidebarOverlay) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.add('show');
+                    sidebarOverlay.classList.add('show');
+                });
+                
+                sidebarOverlay.addEventListener('click', () => {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
