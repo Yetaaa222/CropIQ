@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.CropIQ"
+      "bundleIdentifier": "com.anonymous.CropIQ",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "CropIQ needs access to your location to provide accurate weather and crop recommendations for your farm."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +25,11 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.CropIQ"
+      "package": "com.anonymous.CropIQ",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/logo.png"

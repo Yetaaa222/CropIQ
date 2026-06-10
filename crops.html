@@ -15,6 +15,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
 
+    <script>
+        if (localStorage.getItem('admin-theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -215,6 +221,254 @@
             background-color: #fef2f2;
             color: #dc2626;
         }
+
+        /* ── Crop cards ── */
+        .crop-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .crop-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 30px -5px rgba(0, 0, 0, 0.06);
+        }
+
+        .crop-card .card-actions {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: all 0.2s ease;
+            z-index: 5;
+        }
+
+        .crop-card:hover .card-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .crop-img-preview {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 0.75rem;
+            background-color: #f8fafc;
+        }
+
+        /* ── Dark Mode Styles ── */
+        html.dark-mode body {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode #sidebar {
+            background: #1e293b !important;
+            border-right-color: #334155 !important;
+        }
+
+        html.dark-mode .sidebar-brand-icon {
+            box-shadow: 0 8px 20px -4px rgba(34, 197, 94, 0.15) !important;
+        }
+
+        html.dark-mode .sidebar-link {
+            color: #94a3b8 !important;
+        }
+
+        html.dark-mode .sidebar-link:hover {
+            background-color: rgba(34, 197, 94, 0.1) !important;
+            color: #4ade80 !important;
+        }
+
+        html.dark-mode .sidebar-link.active {
+            background-color: #16a34a !important;
+            color: #fff !important;
+        }
+
+        html.dark-mode header {
+            background-color: #1e293b !important;
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode header h2,
+        html.dark-mode header h5 {
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .glass-card,
+        html.dark-mode .settings-card,
+        html.dark-mode .stat-card,
+        html.dark-mode .farm-card,
+        html.dark-mode .bg-white.border,
+        html.dark-mode .crop-card {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .text-dark {
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .text-muted {
+            color: #94a3b8 !important;
+        }
+
+        html.dark-mode .form-control {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .form-control::placeholder {
+            color: #64748b !important;
+        }
+
+        html.dark-mode .form-control:focus {
+            border-color: #22c55e !important;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
+        }
+
+        html.dark-mode .form-control[readonly] {
+            background-color: #0f172a !important;
+            color: #94a3b8 !important;
+        }
+
+        html.dark-mode .form-select {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .table {
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .table th {
+            background-color: #1e293b !important;
+            color: #94a3b8 !important;
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode .table td {
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode .table tbody tr:hover {
+            background-color: rgba(34, 197, 94, 0.08) !important;
+        }
+
+        html.dark-mode .table-responsive,
+        html.dark-mode .border,
+        html.dark-mode .border-bottom,
+        html.dark-mode .border-top,
+        html.dark-mode .border-start,
+        html.dark-mode .border-end {
+            border-color: #334155 !important;
+        }
+
+        html.dark-mode .user-avatar {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+
+        html.dark-mode tr:hover .user-avatar {
+            background-color: rgba(34, 197, 94, 0.2) !important;
+            color: #4ade80 !important;
+        }
+
+        html.dark-mode .slide-panel {
+            background-color: #0f172a !important;
+            box-shadow: -20px 0 50px -10px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        html.dark-mode .modal-content {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+
+        html.dark-mode .modal-header {
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode .modal-footer {
+            border-top-color: #334155 !important;
+        }
+
+        html.dark-mode .btn-close {
+            filter: invert(1) !important;
+        }
+
+        html.dark-mode .ai-banner {
+            background: linear-gradient(135deg, #064e3b, #022c22) !important;
+            border-color: #047857 !important;
+        }
+
+        html.dark-mode .text-success-emphasis {
+            color: #a7f3d0 !important;
+        }
+
+        html.dark-mode .text-success {
+            color: #4ade80 !important;
+        }
+
+        html.dark-mode .badge-ai {
+            background-color: #064e3b !important;
+            color: #6ee7b7 !important;
+        }
+
+        html.dark-mode .toggle-track {
+            background-color: #334155 !important;
+        }
+
+        html.dark-mode .toggle-track.active {
+            background-color: #22c55e !important;
+        }
+
+        html.dark-mode code.bg-light,
+        html.dark-mode .bg-light,
+        html.dark-mode .crop-img-preview {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+
+        /* ── Mobile Sidebar Styles ── */
+        @media (max-width: 991.98px) {
+            #sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                bottom: 0;
+                z-index: 1045;
+                transition: left 0.3s ease;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+                display: flex !important;
+            }
+            #sidebar.show {
+                left: 0;
+            }
+        }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1040;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
     </style>
 </head>
 
@@ -222,7 +476,8 @@
     <div class="d-flex" style="height: 100vh;">
 
         <!-- ── Sidebar ── -->
-        <aside id="sidebar" class="d-none d-lg-flex flex-column">
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <aside id="sidebar" class="flex-column">
             <!-- Brand -->
             <div class="p-4 pb-3">
                 <div class="d-flex align-items-center gap-3">
@@ -274,41 +529,44 @@
         <div class="d-flex flex-column flex-grow-1 min-w-0">
 
             <!-- Header -->
-            <header class="bg-white border-bottom d-flex align-items-center justify-content-between px-4"
+            <header class="bg-white border-bottom d-flex align-items-center justify-content-between px-3 px-lg-4"
                 style="height:64px; border-color:#f1f5f9 !important; z-index:10;">
-                <h2 class="mb-0 fw-bold fs-6 text-dark">Crop Management</h2>
+                <div class="d-flex align-items-center gap-2">
+                    <button id="mobile-menu-btn" class="btn d-lg-none p-1" style="color:inherit; border:none;">
+                        <i class="bi bi-list fs-3"></i>
+                    </button>
+                    <h2 class="mb-0 fw-bold fs-6 text-dark">Crop Management</h2>
+                </div>
                 <span id="connection-status" class="status-pill connecting">Connecting...</span>
             </header>
 
             <!-- Scrollable body -->
-            <div id="main-content" class="p-4">
-                <div class="bg-white border rounded-4 p-4" style="max-width:860px; border-color:#f1f5f9 !important;">
+            <div id="main-content" class="p-4 d-flex flex-column align-items-center">
+                <div class="bg-white border rounded-4 p-4 w-100" style="max-width:860px;">
 
                     <!-- Card header -->
-                    <div class="mb-1">
-                        <h5 class="fw-bold text-dark mb-1">Add Crop For Farmers</h5>
+                    <div class="mb-1 text-center">
+                        <h5 class="fw-bold text-dark mb-1" id="form-card-title">Add Crop For Farmers</h5>
                         <p class="text-muted mb-0" style="font-size:12px;">
-                            New crop images are uploaded to a storage bucket and linked in the
-                            <code class="bg-light px-1 rounded">crops</code> table.
                         </p>
                     </div>
 
                     <!-- ── AI Auto-Fill Banner ── -->
-                    <div class="mt-3 mb-4 p-3 rounded-3 border border-success-subtle ai-banner"
+                    <div class="mt-3 mb-4 p-3 rounded-3 border border-success-subtle ai-banner text-center"
                         style="background: linear-gradient(135deg, #f0fdf4, #ecfdf5);">
-                        <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
                             <span>✨</span>
                             <span class="fw-bold text-success-emphasis" style="font-size:0.875rem;">AI Auto-Fill</span>
                             <span class="badge-ai">Powered by AI</span>
                         </div>
-                        <p class="text-success mb-2" style="font-size:12px;">
+                        <p class="text-success mb-2 mx-auto" style="font-size:12px; max-width:600px;">
                             Enter a crop name and let AI fill in all agronomic details for Zambian conditions —
                             temperature ranges, soil types, rainfall, diseases, and more. Review before saving.
                         </p>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 justify-content-center">
                             <input id="ai-crop-name-input" type="text"
                                 placeholder="e.g. Groundnuts, Sweet potato, Sorghum..."
-                                class="form-control form-control-sm flex-grow-1" style="border-color:#bbf7d0;">
+                                class="form-control form-control-sm" style="max-width:400px; border-color:#bbf7d0;">
                             <button id="ai-generate-btn"
                                 class="ai-btn btn btn-sm text-white fw-bold px-3 d-flex align-items-center gap-2 text-nowrap"
                                 onclick="generateWithAI()">
@@ -394,7 +652,7 @@
                             </div>
 
                             <!-- Actions -->
-                            <div class="col-12 d-flex align-items-center gap-3 flex-wrap">
+                            <div class="col-12 d-flex align-items-center justify-content-center gap-3 flex-wrap mt-2">
                                 <button id="add-crop-submit" type="submit" class="btn btn-success btn-sm fw-bold px-4">
                                     <i class="bi bi-floppy me-1"></i> Save Crop
                                 </button>
@@ -409,6 +667,15 @@
                     </form>
 
                 </div><!-- /card -->
+
+                <!-- ── Existing Crops Grid ── -->
+                <div class="mt-5 w-100" style="max-width:860px;">
+                    <h5 class="fw-bold text-dark mb-3 text-center">All Crops</h5>
+                    <div class="row g-3 justify-content-center" id="crops-grid">
+                        <!-- Crops loaded dynamically -->
+                    </div>
+                </div>
+
             </div><!-- /main-content -->
         </div><!-- /main col -->
     </div><!-- /flex wrapper -->
@@ -518,6 +785,9 @@
             document.getElementById('ai-crop-name-input').value = '';
             document.getElementById('ai-status').classList.add('d-none');
             document.getElementById('add-crop-status').textContent = '';
+            editingCropId = null;
+            document.getElementById('form-card-title').textContent = 'Add Crop For Farmers';
+            document.getElementById('add-crop-submit').innerHTML = '<i class="bi bi-floppy me-1"></i> Save Crop';
         }
 
         // ── Supabase helpers ─────────────────────────────────────────────
@@ -526,6 +796,9 @@
             const parsed = Number(value);
             return Number.isFinite(parsed) ? parsed : null;
         };
+
+        let crops = [];
+        let editingCropId = null;
 
         async function uploadCropImage(file, cropName) {
             if (!file) return { image_path: null, image_url: null };
@@ -554,16 +827,21 @@
             const imageFile = document.getElementById('crop-image-file').files[0];
             if (!name || !fullName || !category) throw new Error('Name, full name, and category are required');
 
-            const { data: maxCrop, error: maxErr } = await supabaseClient.from('crops').select('id').order('id', { ascending: false }).limit(1).maybeSingle();
-            if (maxErr) throw maxErr;
-            const nextId = (maxCrop?.id || 0) + 1;
+            let uploadedImage = { image_path: null, image_url: null };
+            if (editingCropId) {
+                const existing = crops.find(c => c.id === editingCropId);
+                uploadedImage.image_path = existing?.image_path || null;
+                uploadedImage.image_url = existing?.image_url || null;
+            }
 
-            const uploadedImage = await uploadCropImage(imageFile, name);
+            if (imageFile) {
+                uploadedImage = await uploadCropImage(imageFile, name);
+            }
+
             const diseasesInput = document.getElementById('crop-common-diseases').value.trim();
             const commonDiseases = diseasesInput ? diseasesInput.split(',').map(s => s.trim()).filter(Boolean) : null;
 
             const payload = {
-                id: nextId,
                 name,
                 full_name: fullName,
                 category,
@@ -584,8 +862,116 @@
                 image_url: uploadedImage.image_url
             };
 
-            const { error: insertErr } = await supabaseClient.from('crops').insert(payload);
-            if (insertErr) throw insertErr;
+            if (editingCropId) {
+                const { error: insertErr } = await supabaseClient.from('crops').update(payload).eq('id', editingCropId);
+                if (insertErr) throw insertErr;
+            } else {
+                const { data: maxCrop, error: maxErr } = await supabaseClient.from('crops').select('id').order('id', { ascending: false }).limit(1).maybeSingle();
+                if (maxErr) throw maxErr;
+                const nextId = (maxCrop?.id || 0) + 1;
+                payload.id = nextId;
+
+                const { error: insertErr } = await supabaseClient.from('crops').insert(payload);
+                if (insertErr) throw insertErr;
+            }
+        }
+
+        // ── Crop CRUD Handlers ───────────────────────────────────────────
+        async function loadCrops() {
+            try {
+                const { data, error } = await supabaseClient.from('crops').select('*').order('name', { ascending: true });
+                if (error) throw error;
+                crops = data || [];
+                renderCrops();
+            } catch (err) {
+                console.error('Error loading crops:', err);
+            }
+        }
+
+        function renderCrops() {
+            const grid = document.getElementById('crops-grid');
+            if (crops.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-12">
+                        <div class="text-center p-5 bg-white border rounded-4" style="border-color:#f1f5f9 !important;">
+                            <p class="text-muted mb-0">No crops added yet.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = crops.map(c => {
+                const imgTag = c.image_url
+                    ? `<img src="${c.image_url}" class="crop-img-preview mb-3" alt="${c.name}">`
+                    : `<div class="crop-img-preview mb-3 d-flex align-items-center justify-content-center bg-light text-muted" style="font-size: 2.5rem;">🌱</div>`;
+
+                return `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="crop-card d-flex flex-column align-items-center h-100">
+                            <div class="card-actions d-flex gap-2">
+                                <button onclick="editCrop(${c.id})" class="btn btn-sm border" style="background:#fff; color:#2563eb; border-radius:0.75rem;">
+                                    <i class="bi bi-pencil" style="font-size:0.75rem;"></i>
+                                </button>
+                                <button onclick="deleteCrop(${c.id})" class="btn btn-sm border" style="background:#fff; color:#dc2626; border-radius:0.75rem;">
+                                    <i class="bi bi-trash" style="font-size:0.75rem;"></i>
+                                </button>
+                            </div>
+                            ${imgTag}
+                            <h6 class="fw-bold text-dark mb-1 mt-2">${c.full_name || c.name}</h6>
+                            <div class="mb-2">
+                                <span class="badge bg-success bg-opacity-10 text-success" style="font-size:10px; font-weight:700; border-radius:20px;">${c.category}</span>
+                            </div>
+                            <p class="text-muted flex-grow-1 mb-2" style="font-size:0.8rem; line-height:1.6;">${c.short_description || 'No description available.'}</p>
+                            <div class="pt-2 mt-auto border-top d-flex flex-column gap-1 text-muted w-100" style="font-size:11px;">
+                                <div><i class="bi bi-calendar3 me-1"></i> ${c.growing_months || 'N/A'}</div>
+                                <div><i class="bi bi-moisture me-1"></i> ${c.soil_type || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editCrop(id) {
+            const crop = crops.find(c => c.id === id);
+            if (!crop) return;
+
+            editingCropId = crop.id;
+            document.getElementById('form-card-title').textContent = `Edit Crop: ${crop.name}`;
+            document.getElementById('add-crop-submit').innerHTML = '<i class="bi bi-floppy me-1"></i> Update Crop';
+
+            // Fill form fields
+            document.getElementById('crop-name').value = crop.name || '';
+            document.getElementById('crop-full-name').value = crop.full_name || '';
+            document.getElementById('crop-category').value = crop.category || '';
+            document.getElementById('crop-short-description').value = crop.short_description || '';
+            document.getElementById('crop-description').value = crop.description || '';
+            document.getElementById('crop-temp-min').value = crop.temp_range_min !== null ? crop.temp_range_min : '';
+            document.getElementById('crop-temp-max').value = crop.temp_range_max !== null ? crop.temp_range_max : '';
+            document.getElementById('crop-rainfall-min').value = crop.rainfall_min !== null ? crop.rainfall_min : '';
+            document.getElementById('crop-rainfall-max').value = crop.rainfall_max !== null ? crop.rainfall_max : '';
+            document.getElementById('crop-humidity-min').value = crop.humidity_min !== null ? crop.humidity_min : '';
+            document.getElementById('crop-humidity-max').value = crop.humidity_max !== null ? crop.humidity_max : '';
+            document.getElementById('crop-soil-type').value = crop.soil_type || '';
+            document.getElementById('crop-water-needs').value = crop.water_needs || '';
+            document.getElementById('crop-growing-months').value = crop.growing_months || '';
+            document.getElementById('crop-common-diseases').value = Array.isArray(crop.common_diseases) ? crop.common_diseases.join(', ') : '';
+            document.getElementById('crop-management-practices').value = crop.management_practices || '';
+
+            // Scroll to form
+            document.getElementById('main-content').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deleteCrop(id) {
+            if (!confirm('Are you sure you want to delete this crop? This will permanently remove it.')) return;
+            try {
+                const { error } = await supabaseClient.from('crops').delete().eq('id', id);
+                if (error) throw error;
+                await loadCrops();
+            } catch (err) {
+                alert('Delete failed: ' + err.message);
+            }
         }
 
         // ── Init ─────────────────────────────────────────────────────────
@@ -617,12 +1003,11 @@
                 status.style.fontSize = '12px';
                 try {
                     await createCropFromAdmin(form);
-                    status.textContent = '✅ Crop saved successfully.';
+                    status.textContent = editingCropId ? '✅ Crop updated successfully.' : '✅ Crop saved successfully.';
                     status.className = 'text-success fw-semibold';
                     status.style.fontSize = '12px';
-                    form.reset();
-                    document.getElementById('ai-crop-name-input').value = '';
-                    document.getElementById('ai-status').classList.add('d-none');
+                    clearForm();
+                    await loadCrops();
                 } catch (error) {
                     status.textContent = `Failed: ${error.message || 'Could not save crop'}`;
                     status.className = 'text-danger fw-semibold';
@@ -631,9 +1016,31 @@
                     submitBtn.disabled = false;
                 }
             });
+
+            await loadCrops();
         }
 
         init();
+    </script>
+    <!-- Mobile Menu Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            if (mobileMenuBtn && sidebar && sidebarOverlay) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.add('show');
+                    sidebarOverlay.classList.add('show');
+                });
+                
+                sidebarOverlay.addEventListener('click', () => {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            }
+        });
     </script>
 </body>
 

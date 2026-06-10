@@ -9,10 +9,10 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { cropName } = await req.json();
-    if (!cropName) return new Response(JSON.stringify({ error: "cropName required" }), { status: 400, headers: corsHeaders });
+    const { topic } = await req.json();
+    if (!topic) return new Response(JSON.stringify({ error: "topic required" }), { status: 400, headers: corsHeaders });
 
-    const prompt = `You are an agricultural expert specialising in Zambian farming conditions. Generate detailed agronomic data for the crop: "${cropName}". Respond with ONLY a valid JSON object, no markdown, no backticks. Schema: {"name":"lowercase short name","full_name":"common name","category":"one of: Cereal, Legume, Root & Tuber, Vegetable, Fruit, Cash Crop, Oil Crop, Fibre Crop","short_description":"one sentence 15-20 words for a farmer app","description":"2-3 sentences on growing habits, importance in Zambia, typical uses","temp_range_min":0,"temp_range_max":0,"rainfall_min":0,"rainfall_max":0,"humidity_min":0,"humidity_max":0,"soil_type":"e.g. Well-drained loamy soils","water_needs":"e.g. Moderate (500-800mm/season)","growing_months":"e.g. Nov-Apr","common_diseases":"comma-separated 3-5 diseases or pests in Zambia","management_practices":"2-3 sentences on fertiliser, spacing, weeding for Zambia"}`;
+    const prompt = `You are an agricultural education writer specialising in Zambian farming conditions. Generate a complete educational article for smallholder farmers about: "${topic}". Respond with ONLY a valid JSON object, no markdown, no backticks. Schema: {"title":"clear concise article title","description":"1-2 sentence summary suitable for a card preview","duration":"estimated read time e.g. 15 min read","icon":"single relevant emoji","paragraphs":[{"type":"text","content":"paragraph text"},{"type":"text","content":"paragraph text"}]} Rules: 1) Write 5-8 paragraphs of rich educational content. 2) Use simple language a Zambian smallholder farmer can understand. 3) Include practical, actionable advice specific to Zambian conditions (provinces, seasons, local crops). 4) Cover: introduction, why it matters, step-by-step guidance, common mistakes, and a summary. 5) Each paragraph should be 3-5 sentences. 6) Do NOT include image blocks, only text paragraphs.`;
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -27,6 +27,7 @@ serve(async (req) => {
     });
 
     const data = await response.json();
+
     if (!response.ok) {
       const errMsg = data.error?.message || JSON.stringify(data);
       throw new Error(`Groq API error (${response.status}): ${errMsg}`);
@@ -37,9 +38,9 @@ serve(async (req) => {
       throw new Error("AI returned empty response — please try again.");
     }
     const cleaned = text.replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
-    const crop = JSON.parse(cleaned);
+    const article = JSON.parse(cleaned);
 
-    return new Response(JSON.stringify(crop), {
+    return new Response(JSON.stringify(article), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

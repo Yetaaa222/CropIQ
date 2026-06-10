@@ -15,6 +15,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
 
+    <script>
+        if (localStorage.getItem('admin-theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -78,6 +84,99 @@
             font-weight: 700;
             box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.35);
             transform: translateX(8px);
+        }
+
+        /* ── AI banner ── */
+        @keyframes pulse-border {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(22, 163, 74, 0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% center;
+            }
+
+            100% {
+                background-position: 200% center;
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ai-banner {
+            animation: pulse-border 2s ease-in-out infinite;
+        }
+
+        .ai-btn {
+            background: linear-gradient(90deg, #15803d, #16a34a, #22c55e, #16a34a, #15803d);
+            background-size: 200% auto;
+            animation: shimmer 3s linear infinite;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .ai-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
+        }
+
+        .ai-btn:disabled {
+            animation: none;
+            background: #d1fae5;
+            color: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .spinner-sm {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .badge-ai {
+            background-color: #dcfce7;
+            color: #15803d;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 20px;
+            padding: 2px 10px;
+        }
+
+        .field-filled {
+            animation: fadeIn 0.3s ease;
+            border-color: #86efac !important;
+            background-color: #f0fdf4 !important;
         }
 
         /* ── Scrollable main content ── */
@@ -206,6 +305,190 @@
             border-radius: 1.25rem;
             padding: 1rem;
         }
+
+        /* ── Dark Mode Styles ── */
+        html.dark-mode body {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+        }
+        html.dark-mode #sidebar {
+            background: #1e293b !important;
+            border-right-color: #334155 !important;
+        }
+        html.dark-mode .sidebar-brand-icon {
+            box-shadow: 0 8px 20px -4px rgba(34, 197, 94, 0.15) !important;
+        }
+        html.dark-mode .sidebar-link {
+            color: #94a3b8 !important;
+        }
+        html.dark-mode .sidebar-link:hover {
+            background-color: rgba(34, 197, 94, 0.1) !important;
+            color: #4ade80 !important;
+        }
+        html.dark-mode .sidebar-link.active {
+            background-color: #16a34a !important;
+            color: #fff !important;
+        }
+        html.dark-mode header {
+            background-color: #1e293b !important;
+            border-bottom-color: #334155 !important;
+        }
+        html.dark-mode header h2,
+        html.dark-mode header h5 {
+            color: #f8fafc !important;
+        }
+        html.dark-mode .glass-card,
+        html.dark-mode .settings-card,
+        html.dark-mode .stat-card,
+        html.dark-mode .farm-card,
+        html.dark-mode .bg-white.border,
+        html.dark-mode .crop-card,
+        html.dark-mode .article-card,
+        html.dark-mode .content-block {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html.dark-mode .article-icon {
+            background-color: #334155 !important;
+        }
+        html.dark-mode .text-dark {
+            color: #f8fafc !important;
+        }
+        html.dark-mode .text-muted {
+            color: #94a3b8 !important;
+        }
+        html.dark-mode .form-control {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html.dark-mode .form-control::placeholder {
+            color: #64748b !important;
+        }
+        html.dark-mode .form-control:focus {
+            border-color: #22c55e !important;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
+        }
+        html.dark-mode .form-select {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html.dark-mode .table {
+            color: #f8fafc !important;
+        }
+        html.dark-mode .table th {
+            background-color: #1e293b !important;
+            color: #94a3b8 !important;
+            border-bottom-color: #334155 !important;
+        }
+        html.dark-mode .table td {
+            border-bottom-color: #334155 !important;
+        }
+        html.dark-mode .table tbody tr:hover {
+            background-color: rgba(34, 197, 94, 0.08) !important;
+        }
+        html.dark-mode .table-responsive,
+        html.dark-mode .border,
+        html.dark-mode .border-bottom,
+        html.dark-mode .border-top,
+        html.dark-mode .border-start,
+        html.dark-mode .border-end {
+            border-color: #334155 !important;
+        }
+        html.dark-mode .form-control[readonly] {
+            background-color: #0f172a !important;
+            color: #94a3b8 !important;
+        }
+        html.dark-mode .user-avatar {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+        html.dark-mode tr:hover .user-avatar {
+            background-color: rgba(34, 197, 94, 0.2) !important;
+            color: #4ade80 !important;
+        }
+        html.dark-mode .slide-panel {
+            background-color: #0f172a !important;
+            box-shadow: -20px 0 50px -10px rgba(0, 0, 0, 0.3) !important;
+        }
+        html.dark-mode .modal-content {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+        html.dark-mode .modal-header {
+            border-bottom-color: #334155 !important;
+        }
+        html.dark-mode .modal-footer {
+            border-top-color: #334155 !important;
+            background-color: #1e293b !important;
+        }
+        html.dark-mode .btn-close {
+            filter: invert(1) !important;
+        }
+        html.dark-mode .ai-banner {
+            background: linear-gradient(135deg, #064e3b, #022c22) !important;
+            border-color: #047857 !important;
+        }
+        html.dark-mode .text-success-emphasis {
+            color: #a7f3d0 !important;
+        }
+        html.dark-mode .text-success {
+            color: #4ade80 !important;
+        }
+        html.dark-mode .badge-ai {
+            background-color: #064e3b !important;
+            color: #6ee7b7 !important;
+        }
+        html.dark-mode .toggle-track {
+            background-color: #334155 !important;
+        }
+        html.dark-mode .toggle-track.active {
+            background-color: #22c55e !important;
+        }
+        html.dark-mode code.bg-light,
+        html.dark-mode .bg-light,
+        html.dark-mode .dashed-zone {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+            border-color: #475569 !important;
+        }
+        html.dark-mode .article-card .card-actions .btn {
+            background-color: #1e293b !important;
+        }
+
+        /* ── Mobile Sidebar Styles ── */
+        @media (max-width: 991.98px) {
+            #sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                bottom: 0;
+                z-index: 1045;
+                transition: left 0.3s ease;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+                display: flex !important;
+            }
+            #sidebar.show {
+                left: 0;
+            }
+        }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1040;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
     </style>
 </head>
 
@@ -213,7 +496,8 @@
     <div class="d-flex" style="height: 100vh;">
 
         <!-- ── Sidebar ── -->
-        <aside id="sidebar" class="d-none d-lg-flex flex-column">
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <aside id="sidebar" class="flex-column">
             <!-- Brand -->
             <div class="p-4 pb-3">
                 <div class="d-flex align-items-center gap-3">
@@ -265,19 +549,50 @@
         <div class="d-flex flex-column flex-grow-1 min-w-0">
 
             <!-- Header -->
-            <header class="bg-white border-bottom d-flex align-items-center justify-content-between px-4"
-                style="height:64px; border-color:#f1f5f9 !important; z-index:10;">
-                <h2 class="mb-0 fw-bold fs-6 text-dark">Educational Articles</h2>
-                <button onclick="openArticleModal()" class="btn btn-success btn-sm fw-bold px-3"
-                    style="border-radius:0.75rem;">
-                    <i class="bi bi-plus-lg me-1"></i> New Article
-                </button>
+            <header class="bg-white border-bottom d-flex align-items-center justify-content-between px-3 px-lg-4"
+                style="height:64px; z-index:10;">
+                <div class="d-flex align-items-center gap-2">
+                    <button id="mobile-menu-btn" class="btn d-lg-none p-1" style="color:inherit; border:none;">
+                        <i class="bi bi-list fs-3"></i>
+                    </button>
+                    <h2 class="mb-0 fw-bold fs-6 text-dark">Knowledge Base</h2>
+                </div>
             </header>
 
             <!-- Scrollable body -->
             <div id="main-content" class="p-4">
-                <div class="row g-4" id="articles-grid">
-                    <!-- Cards injected by JS -->
+                <div class="mx-auto w-100" style="max-width:1200px;">
+
+                    <!-- ── AI Auto-Fill Banner ── -->
+                    <div class="mb-4 p-3 rounded-3 border border-success-subtle ai-banner"
+                        style="background: linear-gradient(135deg, #f0fdf4, #ecfdf5);">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span>✨</span>
+                            <span class="fw-bold text-success-emphasis" style="font-size:0.875rem;">AI Article
+                                Generator</span>
+                            <span class="badge-ai">Powered by AI</span>
+                        </div>
+                        <p class="text-success mb-2" style="font-size:12px;">
+                            Enter a farming topic and let AI write a complete educational article for Zambian farmers —
+                            introduction, practical steps, common mistakes, and more. Review before saving.
+                        </p>
+                        <div class="d-flex gap-2">
+                            <input id="ai-topic-input" type="text"
+                                placeholder="e.g. Crop rotation benefits, Composting techniques, Maize storage..."
+                                class="form-control form-control-sm flex-grow-1" style="border-color:#bbf7d0;">
+                            <button id="ai-generate-btn"
+                                class="ai-btn btn btn-sm text-white fw-bold px-3 d-flex align-items-center gap-2 text-nowrap"
+                                onclick="generateArticleWithAI()">
+                                <span id="ai-btn-icon">✨</span>
+                                <span id="ai-btn-text">Generate</span>
+                            </button>
+                        </div>
+                        <p id="ai-status" class="mb-0 mt-2 text-success d-none" style="font-size:12px;"></p>
+                    </div>
+
+                    <div class="row g-4" id="articles-grid">
+                        <!-- Cards injected by JS -->
+                    </div>
                 </div>
             </div>
         </div><!-- /main col -->
@@ -294,29 +609,35 @@
                 <div class="modal-body p-4">
                     <!-- Metadata Form -->
                     <form id="article-form">
-                        <p class="mb-3 fw-bold text-success text-uppercase" style="font-size:10px; letter-spacing:0.18em;">Basic Information</p>
+                        <p class="mb-3 fw-bold text-success text-uppercase"
+                            style="font-size:10px; letter-spacing:0.18em;">Basic Information</p>
                         <input type="hidden" id="article-id">
                         <div class="row g-3 mb-3">
                             <div class="col-md-3">
-                                <label class="form-label mb-1" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">ID</label>
+                                <label class="form-label mb-1"
+                                    style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">ID</label>
                                 <input type="number" id="f-id" required class="form-control form-control-sm">
                             </div>
                             <div class="col-md-9">
-                                <label class="form-label mb-1" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Title</label>
+                                <label class="form-label mb-1"
+                                    style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Title</label>
                                 <input type="text" id="f-title" required class="form-control form-control-sm">
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label mb-1" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Description</label>
+                            <label class="form-label mb-1"
+                                style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Description</label>
                             <textarea id="f-description" rows="2" class="form-control form-control-sm"></textarea>
                         </div>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label mb-1" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Duration</label>
+                                <label class="form-label mb-1"
+                                    style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Duration</label>
                                 <input type="text" id="f-duration" class="form-control form-control-sm">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label mb-1" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Icon</label>
+                                <label class="form-label mb-1"
+                                    style="font-size:10px; font-weight:700; text-transform:uppercase; color:#94a3b8;">Icon</label>
                                 <input type="text" id="f-icon" class="form-control form-control-sm">
                             </div>
                         </div>
@@ -326,10 +647,15 @@
 
                     <!-- Content Blocks -->
                     <div class="d-flex align-items-center justify-content-between mb-3">
-                        <p class="mb-0 fw-bold text-success text-uppercase" style="font-size:10px; letter-spacing:0.18em;">Article Content</p>
+                        <p class="mb-0 fw-bold text-success text-uppercase"
+                            style="font-size:10px; letter-spacing:0.18em;">Article Content</p>
                         <div class="d-flex gap-2">
-                            <button onclick="addContentBlock('text')" class="btn btn-sm fw-bold" style="background:#eff6ff; color:#2563eb; font-size:10px; border-radius:0.5rem; border:1px solid #dbeafe;">+ Add Text</button>
-                            <button onclick="addContentBlock('image')" class="btn btn-sm fw-bold" style="background:#faf5ff; color:#9333ea; font-size:10px; border-radius:0.5rem; border:1px solid #f3e8ff;">+ Add Image</button>
+                            <button onclick="addContentBlock('text')" class="btn btn-sm fw-bold"
+                                style="background:#eff6ff; color:#2563eb; font-size:10px; border-radius:0.5rem; border:1px solid #dbeafe;">+
+                                Add Text</button>
+                            <button onclick="addContentBlock('image')" class="btn btn-sm fw-bold"
+                                style="background:#faf5ff; color:#9333ea; font-size:10px; border-radius:0.5rem; border:1px solid #f3e8ff;">+
+                                Add Image</button>
                         </div>
                     </div>
                     <div id="content-blocks" class="dashed-zone d-flex flex-column gap-3">
@@ -337,8 +663,10 @@
                     </div>
                 </div>
                 <div class="modal-footer px-4 py-3" style="background:#f8fafc; border-color:#f1f5f9;">
-                    <button type="button" class="btn btn-outline-secondary btn-sm px-4" data-bs-dismiss="modal" style="border-radius:0.75rem;">Cancel</button>
-                    <button onclick="saveArticle()" class="btn btn-success btn-sm fw-bold px-4" style="border-radius:0.75rem;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-4" data-bs-dismiss="modal"
+                        style="border-radius:0.75rem;">Cancel</button>
+                    <button onclick="saveArticle()" class="btn btn-success btn-sm fw-bold px-4"
+                        style="border-radius:0.75rem;">
                         <i class="bi bi-floppy me-1"></i> Save Everything
                     </button>
                 </div>
@@ -366,7 +694,112 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             articleModalInstance = new bootstrap.Modal(document.getElementById('articleModal'));
+
+            document.getElementById('ai-topic-input').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); generateArticleWithAI(); }
+            });
         });
+
+        // ── AI Generate Article ──────────────────────────────────────────
+        async function generateArticleWithAI() {
+            const topic = document.getElementById('ai-topic-input').value.trim();
+            if (!topic) { showAIStatus('Please enter a topic first.', 'error'); return; }
+
+            const btn = document.getElementById('ai-generate-btn');
+            const btnText = document.getElementById('ai-btn-text');
+            btn.disabled = true;
+            document.getElementById('ai-btn-icon').innerHTML = '<span class="spinner-sm"></span>';
+            btnText.textContent = 'Generating...';
+            showAIStatus(`Generating article about "${topic}"...`, 'loading');
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-article`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({ topic })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || `Server error ${response.status}`);
+                }
+
+                const article = await response.json();
+                fillArticleModal(article);
+                showAIStatus(`✅ Article generated — review content and save when ready.`, 'success');
+
+            } catch (err) {
+                console.error('AI generation error:', err);
+                showAIStatus(`❌ ${err.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                document.getElementById('ai-btn-icon').textContent = '✨';
+                btnText.textContent = 'Generate';
+            }
+        }
+
+        function fillArticleModal(article) {
+            // Reset the modal
+            document.getElementById('article-form').reset();
+            document.getElementById('article-id').value = '';
+            document.getElementById('f-id').disabled = false;
+            document.getElementById('content-blocks').innerHTML = '';
+            currentBlocks = [];
+
+            // Set next ID
+            const nextId = modules.length > 0 ? Math.max(...modules.map(m => m.id)) + 1 : 1;
+            document.getElementById('f-id').value = nextId;
+            document.getElementById('modal-title').innerText = 'New Knowledge Module';
+
+            // Fill metadata fields with animation
+            const fieldMap = {
+                'f-title': article.title,
+                'f-description': article.description,
+                'f-duration': article.duration,
+                'f-icon': article.icon
+            };
+
+            let delay = 0;
+            for (const [id, value] of Object.entries(fieldMap)) {
+                if (value === null || value === undefined || value === '') continue;
+                setTimeout(() => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    el.value = value;
+                    el.classList.add('field-filled');
+                    setTimeout(() => el.classList.remove('field-filled'), 1200);
+                }, delay);
+                delay += 80;
+            }
+
+            // Fill content blocks with staggered animation
+            if (article.paragraphs && Array.isArray(article.paragraphs)) {
+                article.paragraphs.forEach((p, i) => {
+                    setTimeout(() => {
+                        addContentBlock(p.type || 'text', p.content || p.paragraph || '');
+                    }, delay + (i * 100));
+                });
+            }
+
+            // Show the modal after a small delay so fields animate in
+            setTimeout(() => {
+                articleModalInstance.show();
+            }, delay + 200);
+        }
+
+        function showAIStatus(msg, type) {
+            const el = document.getElementById('ai-status');
+            el.textContent = msg;
+            el.className = 'mb-0 mt-2';
+            el.style.fontSize = '12px';
+            if (type === 'success') { el.classList.add('text-success', 'fw-semibold'); }
+            else if (type === 'error') { el.classList.add('text-danger', 'fw-semibold'); }
+            else { el.classList.add('text-success'); }
+            el.classList.remove('d-none');
+        }
 
         async function loadArticles() {
             if (!supabaseClient) return;
@@ -540,6 +973,26 @@
         }
 
         loadArticles();
+    </script>
+    <!-- Mobile Menu Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            if (mobileMenuBtn && sidebar && sidebarOverlay) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.add('show');
+                    sidebarOverlay.classList.add('show');
+                });
+                
+                sidebarOverlay.addEventListener('click', () => {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            }
+        });
     </script>
 </body>
 

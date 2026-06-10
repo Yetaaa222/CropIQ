@@ -43,7 +43,7 @@ export default function AppRoot() {
     checkUser();
     // Run connectivity test
     testSupabaseConnection();
-    
+
     const subscription = onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);
@@ -146,7 +146,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
   // Crops
   const [recommendations, setRecommendations] = useState([]);
   const [selectedCrop, setSelectedCrop] = useState(null);
-  
+
   // Education
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedModuleContent, setSelectedModuleContent] = useState([]);
@@ -292,7 +292,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
       if (m) {
         const min = parseFloat(m[1]);
         const max = parseFloat(m[2]);
-        
+
         const actual = (monthlyWeather && currentMonth)
           ? (monthlyWeather[currentMonth]?.temperature || weather.temperature?.avg || 0)
           : (weather.temperature?.avg || 0);
@@ -303,7 +303,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
         let score;
         if (actual >= min && actual <= max) {
           const distanceFromMid = Math.abs(actual - mid);
-          score = 100 - (distanceFromMid / (range / 2)) * 10; 
+          score = 100 - (distanceFromMid / (range / 2)) * 10;
         } else if (actual < min) {
           // Too cold
           const deficit = min - actual;
@@ -350,7 +350,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
       const waterNeeds = crop.waterNeeds.toLowerCase();
       const pattern = weather.rainfall.pattern.toLowerCase();
 
-      let score = 70; 
+      let score = 70;
 
       if (waterNeeds.includes('high') || waterNeeds.includes('frequent')) {
         if (pattern === 'high') score = 100;
@@ -363,7 +363,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
       } else if (waterNeeds.includes('low') || waterNeeds.includes('drought')) {
         if (pattern === 'low') score = 100;
         else if (pattern === 'moderate') score = 85;
-        else score = 65; 
+        else score = 65;
       }
 
       scores.push(score);
@@ -377,7 +377,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
 
       let score = 70;
       if (cropSoil.includes(farmSoil) || farmSoil.includes('loam')) {
-        score = 100; 
+        score = 100;
       } else if (cropSoil.includes('well-drained') && !farmSoil.includes('clay')) {
         score = 85;
       } else if (cropSoil.includes('clay') && farmSoil.includes('clay')) {
@@ -395,15 +395,15 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
       const size = weather.farmSize.toLowerCase();
       const isSmall = size.includes('small') || size.includes('1') || (size.includes('2') && !size.includes('20'));
       const cropName = (crop.name || '').toLowerCase();
-      
+
       const intensiveCrops = ['tomato', 'onion', 'cabbage', 'rape', 'kale', 'pepper', 'beans'];
       const extensiveCrops = ['maize', 'soy', 'sunflower', 'wheat', 'cotton', 'tobacco'];
-      
+
       let score = 75;
       if (isSmall && intensiveCrops.some(c => cropName.includes(c))) score = 100;
       else if (!isSmall && extensiveCrops.some(c => cropName.includes(c))) score = 100;
       else if (isSmall && extensiveCrops.some(c => cropName.includes(c))) score = 65;
-      
+
       scores.push(score);
       weights.push(5);
     }
@@ -625,7 +625,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
     } finally {
       setIsLoading(false);
     }
-  }; 
+  };
 
   // ── Static data ───────────────────────────────────────────────
 
@@ -685,7 +685,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
     console.log('--- CROP-IQ-DEBUG: STARTING PROFILE SAVE ---');
     try {
       let pictureUrl = userProfile?.profile_picture_url || null;
-      
+
       // If user selected a new local image, upload it first
       const isRemoteImage = typeof editProfilePicture === 'string' && editProfilePicture.startsWith('http');
       if (editProfilePicture && !isRemoteImage) {
@@ -704,11 +704,11 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
 
       console.log('Attempting to upsert user profile data...');
       await upsertUserProfile({
-        full_name: editFullName || undefined, 
+        full_name: editFullName || undefined,
         province: editProvince || undefined,
         experience_years: editExperienceYears ? parseInt(editExperienceYears, 10) : undefined,
         primary_crops: editPrimaryCrops ? editPrimaryCrops.split(',').map(s => s.trim()).filter(Boolean) : undefined,
-        farm_size: editFarmSize || undefined, 
+        farm_size: editFarmSize || undefined,
         soil_type: editSoilType || undefined,
         profile_picture_url: pictureUrl || null,
       }, user);
@@ -733,8 +733,8 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
       'Are you sure you want to delete this saved location?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -892,97 +892,97 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
     }));
 
     return (
-    <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <ScrollView style={styles.container}>
+      <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <ScrollView style={styles.container}>
 
-        <View style={styles.currentLocationSection}>
-          <View style={styles.locationHeader}>
-            <View style={styles.locationInfo}>
-              <Text style={styles.currentLocationLabel}>📍 Current Location</Text>
-              <Text style={styles.currentLocationName}>{selectedLocation || 'Not Selected'}</Text>
-              {selectedLocationData && <Text style={styles.currentLocationProvince}>{selectedLocationData.province}</Text>}
+          <View style={styles.currentLocationSection}>
+            <View style={styles.locationHeader}>
+              <View style={styles.locationInfo}>
+                <Text style={styles.currentLocationLabel}>📍 Current Location</Text>
+                <Text style={styles.currentLocationName}>{selectedLocation || 'Not Selected'}</Text>
+                {selectedLocationData && <Text style={styles.currentLocationProvince}>{selectedLocationData.province}</Text>}
+              </View>
+              <TouchableOpacity style={styles.changeButton} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setShowLocationModal(true); }}>
+                <Text style={styles.changeButtonText}>Change</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.changeButton} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setShowLocationModal(true); }}>
-              <Text style={styles.changeButtonText}>Change</Text>
+            {weatherData && !isLoading && (
+              <View style={styles.weatherSummaryCards}>
+                {[{ icon: '🌡️', label: 'Avg Temp', value: `${weatherData.temperature.avg}°C` }, { icon: '💧', label: 'Rainfall', value: `${weatherData.rainfall.annual}mm` }, { icon: '💨', label: 'Humidity', value: `${weatherData.humidity}%` }].map(c => (
+                  <View key={c.label} style={styles.summaryCard}>
+                    <Text style={styles.summaryIcon}>{c.icon}</Text>
+                    <Text style={styles.summaryLabel}>{c.label}</Text>
+                    <Text style={styles.summaryValue}>{c.value}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          <View style={styles.getCropRecommendationBox}>
+            <View style={styles.recommendationIcon}><Text style={styles.recommendationIconText}>📈</Text></View>
+            <View style={styles.recommendationContent}>
+              <Text style={styles.recommendationTitle}>Get Crop Recommendations</Text>
+              <Text style={styles.recommendationSubtitle}>Based on your local weather and soil conditions</Text>
+            </View>
+            <TouchableOpacity style={styles.viewRecommendationsButton} onPress={handleNavigateToRecommendations}>
+              <Text style={styles.viewRecommendationsButtonText}>{selectedLocation ? 'View Recommendations' : 'Select Location'}</Text>
             </TouchableOpacity>
           </View>
-          {weatherData && !isLoading && (
-            <View style={styles.weatherSummaryCards}>
-              {[{ icon: '🌡️', label: 'Avg Temp', value: `${weatherData.temperature.avg}°C` }, { icon: '💧', label: 'Rainfall', value: `${weatherData.rainfall.annual}mm` }, { icon: '💨', label: 'Humidity', value: `${weatherData.humidity}%` }].map(c => (
-                <View key={c.label} style={styles.summaryCard}>
-                  <Text style={styles.summaryIcon}>{c.icon}</Text>
-                  <Text style={styles.summaryLabel}>{c.label}</Text>
-                  <Text style={styles.summaryValue}>{c.value}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
 
-        <View style={styles.getCropRecommendationBox}>
-          <View style={styles.recommendationIcon}><Text style={styles.recommendationIconText}>📈</Text></View>
-          <View style={styles.recommendationContent}>
-            <Text style={styles.recommendationTitle}>Get Crop Recommendations</Text>
-            <Text style={styles.recommendationSubtitle}>Based on your local weather and soil conditions</Text>
-          </View>
-          <TouchableOpacity style={styles.viewRecommendationsButton} onPress={handleNavigateToRecommendations}>
-            <Text style={styles.viewRecommendationsButtonText}>{selectedLocation ? 'View Recommendations' : 'Select Location'}</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.weatherHistoryHeader}>
-            <Text style={styles.weatherHistoryTitle}>Weather History (Last 5 Years)</Text>
-          </View>
-          {isLoading && (<View style={styles.loadingContainer}><ActivityIndicator size="large" color="#16a34a" /><Text style={styles.loadingText}>Fetching weather data...</Text></View>)}
-          {error && (<View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text><TouchableOpacity style={styles.retryButton} onPress={() => selectedLocationData && fetchWeatherData(selectedLocationData)}><Text style={styles.retryButtonText}>Retry</Text></TouchableOpacity></View>)}
-          {weatherData && !isLoading && (
-            <View>
-              <WeatherLineChart
-                icon="🌡️"
-                title="Temperature Trend"
-                data={monthlySeries.map(item => ({ label: item.label, value: item.temperature }))}
-                color="#ef4444"
-                unit="°C"
-                summaryItems={[
-                  { label: 'Average', value: weatherData.temperature.avg },
-                  { label: 'Min', value: weatherData.temperature.min },
-                  { label: 'Max', value: weatherData.temperature.max },
-                ]}
-              />
-              <WeatherLineChart
-                icon="💧"
-                title="Rainfall Trend"
-                data={monthlySeries.map(item => ({ label: item.label, value: item.rainfall }))}
-                color="#3b82f6"
-                unit="mm"
-                summaryItems={[
-                  { label: 'Annual Total', value: weatherData.rainfall.annual },
-                  { label: 'Pattern', value: weatherData.rainfall.pattern, withUnit: false },
-                ]}
-              />
-              <WeatherLineChart
-                icon="💨"
-                title="Humidity Trend"
-                data={monthlySeries.map(item => ({ label: item.label, value: item.humidity }))}
-                color="#14b8a6"
-                unit="%"
-                summaryItems={[
-                  { label: 'Average', value: weatherData.humidity },
-                  { label: 'Condition', value: weatherData.humidity > 70 ? 'Humid' : weatherData.humidity > 50 ? 'Moderate' : 'Dry', withUnit: false },
-                ]}
-              />
+          <View style={styles.section}>
+            <View style={styles.weatherHistoryHeader}>
+              <Text style={styles.weatherHistoryTitle}>Weather History (Last 5 Years)</Text>
             </View>
-          )}
-          {!weatherData && !isLoading && !error && (
-            <View style={styles.infoBox}>
-              <Text style={styles.infoTitle}>Get Started</Text>
-              <Text style={styles.infoText}>Select your location above to view historical weather data and receive personalized crop recommendations.</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-    </Animated.View>
+            {isLoading && (<View style={styles.loadingContainer}><ActivityIndicator size="large" color="#16a34a" /><Text style={styles.loadingText}>Fetching weather data...</Text></View>)}
+            {error && (<View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text><TouchableOpacity style={styles.retryButton} onPress={() => selectedLocationData && fetchWeatherData(selectedLocationData)}><Text style={styles.retryButtonText}>Retry</Text></TouchableOpacity></View>)}
+            {weatherData && !isLoading && (
+              <View>
+                <WeatherLineChart
+                  icon="🌡️"
+                  title="Temperature Trend"
+                  data={monthlySeries.map(item => ({ label: item.label, value: item.temperature }))}
+                  color="#ef4444"
+                  unit="°C"
+                  summaryItems={[
+                    { label: 'Average', value: weatherData.temperature.avg },
+                    { label: 'Min', value: weatherData.temperature.min },
+                    { label: 'Max', value: weatherData.temperature.max },
+                  ]}
+                />
+                <WeatherLineChart
+                  icon="💧"
+                  title="Rainfall Trend"
+                  data={monthlySeries.map(item => ({ label: item.label, value: item.rainfall }))}
+                  color="#3b82f6"
+                  unit="mm"
+                  summaryItems={[
+                    { label: 'Annual Total', value: weatherData.rainfall.annual },
+                    { label: 'Pattern', value: weatherData.rainfall.pattern, withUnit: false },
+                  ]}
+                />
+                <WeatherLineChart
+                  icon="💨"
+                  title="Humidity Trend"
+                  data={monthlySeries.map(item => ({ label: item.label, value: item.humidity }))}
+                  color="#14b8a6"
+                  unit="%"
+                  summaryItems={[
+                    { label: 'Average', value: weatherData.humidity },
+                    { label: 'Condition', value: weatherData.humidity > 70 ? 'Humid' : weatherData.humidity > 50 ? 'Moderate' : 'Dry', withUnit: false },
+                  ]}
+                />
+              </View>
+            )}
+            {!weatherData && !isLoading && !error && (
+              <View style={styles.infoBox}>
+                <Text style={styles.infoTitle}>Get Started</Text>
+                <Text style={styles.infoText}>Select your location above to view historical weather data and receive personalized crop recommendations.</Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </Animated.View>
     );
   };
 
@@ -1003,27 +1003,27 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
       if (monthlyWeatherData[selectedMonth] && crops.length > 0) {
         const mw = monthlyWeatherData[selectedMonth];
         const currentLocWeather = {
-            ...mw,
-            rainfall: { annual: mw.rainfall, pattern: mw.rainfall > 100 ? 'High' : mw.rainfall > 50 ? 'Moderate' : 'Low' },
-            soilType: userProfile?.soil_type || null,
-            farmSize: userProfile?.farm_size || null
+          ...mw,
+          rainfall: { annual: mw.rainfall, pattern: mw.rainfall > 100 ? 'High' : mw.rainfall > 50 ? 'Moderate' : 'Low' },
+          soilType: userProfile?.soil_type || null,
+          farmSize: userProfile?.farm_size || null
         };
-        
+
         const recs = crops.map(crop => {
           const s = calculateCropSuitability(crop, currentLocWeather, monthlyWeatherData, selectedMonth);
           const inSeason = isPlantingSeason(crop.growingMonths, selectedMonth);
-          
-          return { 
-            ...crop, 
-            suitability: s, 
-            suitabilityLabel: getSuitabilityLabel(s), 
-            inPlantingSeason: inSeason, 
-            seasonalBoost: inSeason ? '✓ In Season' : '⚠ Off Season' 
+
+          return {
+            ...crop,
+            suitability: s,
+            suitabilityLabel: getSuitabilityLabel(s),
+            inPlantingSeason: inSeason,
+            seasonalBoost: inSeason ? '✓ In Season' : '⚠ Off Season'
           };
-        }).sort((a, b) => { 
-          if (a.inPlantingSeason && !b.inPlantingSeason) return -1; 
-          if (!a.inPlantingSeason && b.inPlantingSeason) return 1; 
-          return b.suitability - a.suitability; 
+        }).sort((a, b) => {
+          if (a.inPlantingSeason && !b.inPlantingSeason) return -1;
+          if (!a.inPlantingSeason && b.inPlantingSeason) return 1;
+          return b.suitability - a.suitability;
         });
         setMonthlyRecommendations(recs);
       } else if (recommendations.length > 0) {
@@ -1038,7 +1038,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
         const isSel = selectedCrops.includes(cropName);
         const updated = isSel ? selectedCrops.filter(n => n !== cropName) : [...selectedCrops, cropName];
         await updateSelectedCrops(updated, user);
-        
+
         setUserProfile(await getUserProfile());
       } catch (e) { alert('Failed to update selected crops.'); } finally { setIsUpdatingCrop(null); }
     };
@@ -1096,45 +1096,45 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
 
               {monthlyRecommendations.length > 0
                 ? monthlyRecommendations.filter(crop => isPlantingSeason(crop.growingMonths, selectedMonth)).sort((a, b) => b.suitability - a.suitability).map(crop => {
-                    const isSel = selectedCrops.includes(crop.name);
-                    const isUpd = isUpdatingCrop === crop.name;
-                    return (
-                      <TouchableOpacity key={crop.id} style={[styles.modernCropCard, isSel && styles.cropCardSelected, crop.inPlantingSeason && styles.cropCardInSeason]} onPress={() => handleCropToggle(crop.name)} disabled={isUpd}>
-                        <View style={styles.cropCardContent}>
-                          <View style={styles.cropImageContainer}>
-                            {crop.imageUrl ? <Image source={{ uri: crop.imageUrl }} style={styles.cropImage} resizeMode="cover" /> : typeof crop.image === 'number' ? <Image source={crop.image} style={styles.cropImage} resizeMode="cover" /> : crop.image ? <Text style={styles.cropEmoji}>{crop.image}</Text> : <Text style={styles.cropEmoji}>🌾</Text>}
+                  const isSel = selectedCrops.includes(crop.name);
+                  const isUpd = isUpdatingCrop === crop.name;
+                  return (
+                    <TouchableOpacity key={crop.id} style={[styles.modernCropCard, isSel && styles.cropCardSelected, crop.inPlantingSeason && styles.cropCardInSeason]} onPress={() => handleCropToggle(crop.name)} disabled={isUpd}>
+                      <View style={styles.cropCardContent}>
+                        <View style={styles.cropImageContainer}>
+                          {crop.imageUrl ? <Image source={{ uri: crop.imageUrl }} style={styles.cropImage} resizeMode="cover" /> : typeof crop.image === 'number' ? <Image source={crop.image} style={styles.cropImage} resizeMode="cover" /> : crop.image ? <Text style={styles.cropEmoji}>{crop.image}</Text> : <Text style={styles.cropEmoji}>🌾</Text>}
+                        </View>
+                        <View style={styles.cropMainInfo}>
+                          <View style={styles.cropHeaderRow}>
+                            <View style={styles.cropTitleContainer}>
+                              <View style={styles.cropTitleRow}>
+                                <Text style={styles.modernCropName}>{crop.fullName}</Text>
+                                {crop.inPlantingSeason && <View style={styles.inSeasonBadge}><Text style={styles.inSeasonBadgeText}>IN SEASON</Text></View>}
+                              </View>
+                              <Text style={styles.cropCategory}>{crop.category}</Text>
+                            </View>
+                            <View style={[styles.modernSuitabilityBadge, { borderRadius: 10 }, { backgroundColor: getSuitabilityColor(crop.suitability) }]}>
+                              <Text style={styles.modernSuitabilityPercent}>{crop.suitability}%</Text>
+                              <Text style={styles.modernSuitabilityLabel}>{crop.suitabilityLabel}</Text>
+                            </View>
                           </View>
-                          <View style={styles.cropMainInfo}>
-                            <View style={styles.cropHeaderRow}>
-                              <View style={styles.cropTitleContainer}>
-                                <View style={styles.cropTitleRow}>
-                                  <Text style={styles.modernCropName}>{crop.fullName}</Text>
-                                  {crop.inPlantingSeason && <View style={styles.inSeasonBadge}><Text style={styles.inSeasonBadgeText}>IN SEASON</Text></View>}
-                                </View>
-                                <Text style={styles.cropCategory}>{crop.category}</Text>
-                              </View>
-                              <View style={[styles.modernSuitabilityBadge, { borderRadius: 10 }, { backgroundColor: getSuitabilityColor(crop.suitability) }]}>
-                                <Text style={styles.modernSuitabilityPercent}>{crop.suitability}%</Text>
-                                <Text style={styles.modernSuitabilityLabel}>{crop.suitabilityLabel}</Text>
-                              </View>
-                            </View>
-                            <Text style={styles.cropShortDescription}>{crop.shortDescription}</Text>
-                            <View style={styles.cropQuickStats}>
-                              {[['calendar-outline', crop.growingMonths], ['water-outline', crop.rainfall], ['thermometer-outline', crop.tempRange]].map(([icon, val]) => (
-                                <View key={icon} style={styles.quickStat}><Ionicons name={icon} size={14} color="#6b7280" /><Text style={styles.quickStatText}>{val}</Text></View>
-                              ))}
-                            </View>
-                            <View style={styles.cropActionButtons}>
-                              <TouchableOpacity style={[styles.viewDetailsButton, { flex: 1, marginRight: 8 }]} onPress={e => { e.stopPropagation(); setSelectedCrop(crop); }}><Text style={styles.viewDetailsButtonText}>View Details</Text></TouchableOpacity>
-                              <TouchableOpacity style={[styles.cropSelectButton, isSel && styles.cropSelectButtonSelected]} onPress={e => { e.stopPropagation(); handleCropToggle(crop.name); }} disabled={isUpd}>
-                                {isUpd ? <ActivityIndicator size="small" color={isSel ? '#fff' : '#16a34a'} /> : (<><Ionicons name={isSel ? 'checkmark-circle' : 'add-circle-outline'} size={20} color={isSel ? '#fff' : '#16a34a'} /><Text style={[styles.cropSelectButtonText, isSel && styles.cropSelectButtonTextSelected]}>{isSel ? 'Selected' : 'Select'}</Text></>)}
-                              </TouchableOpacity>
-                            </View>
+                          <Text style={styles.cropShortDescription}>{crop.shortDescription}</Text>
+                          <View style={styles.cropQuickStats}>
+                            {[['calendar-outline', crop.growingMonths], ['water-outline', crop.rainfall], ['thermometer-outline', crop.tempRange]].map(([icon, val]) => (
+                              <View key={icon} style={styles.quickStat}><Ionicons name={icon} size={14} color="#6b7280" /><Text style={styles.quickStatText}>{val}</Text></View>
+                            ))}
+                          </View>
+                          <View style={styles.cropActionButtons}>
+                            <TouchableOpacity style={[styles.viewDetailsButton, { flex: 1, marginRight: 8 }]} onPress={e => { e.stopPropagation(); setSelectedCrop(crop); }}><Text style={styles.viewDetailsButtonText}>View Details</Text></TouchableOpacity>
+                            <TouchableOpacity style={[styles.cropSelectButton, isSel && styles.cropSelectButtonSelected]} onPress={e => { e.stopPropagation(); handleCropToggle(crop.name); }} disabled={isUpd}>
+                              {isUpd ? <ActivityIndicator size="small" color={isSel ? '#fff' : '#16a34a'} /> : (<><Ionicons name={isSel ? 'checkmark-circle' : 'add-circle-outline'} size={20} color={isSel ? '#fff' : '#16a34a'} /><Text style={[styles.cropSelectButtonText, isSel && styles.cropSelectButtonTextSelected]}>{isSel ? 'Selected' : 'Select'}</Text></>)}
+                            </TouchableOpacity>
                           </View>
                         </View>
-                      </TouchableOpacity>
-                    );
-                  })
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
                 : <View style={styles.infoBox}><Text style={styles.infoTitle}>No Crops in Season</Text><Text style={styles.infoText}>No crops recommended for {months.find(m => m.id === selectedMonth)?.name}. Try a different month.</Text></View>}
             </View>
           )}
@@ -1215,7 +1215,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
               const isCompleted = progress?.completed || false;
               return (
                 <View key={module.id} style={styles.moduleCard}>
-                  
+
                   <Text style={styles.moduleIcon}>{module.icon || '📚'}</Text>
                   <View style={styles.moduleContent}>
                     <Text style={styles.moduleTitle}>{module.title}</Text>
@@ -1249,8 +1249,8 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
         >
           <SafeAreaView style={styles.modalFull}>
             {/* Floating Back Button */}
-            <TouchableOpacity 
-              style={styles.articleFloatingBack} 
+            <TouchableOpacity
+              style={styles.articleFloatingBack}
               onPress={() => setShowModuleModal(false)}
             >
               <Text style={{ fontSize: 20, color: '#16a34a', fontWeight: 'bold' }}>✕</Text>
@@ -1287,7 +1287,7 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
                     <View style={styles.articleQuoteBox}>
                       <Text style={styles.articleQuoteText}>{selectedModule?.description}</Text>
                     </View>
-                    
+
                     {selectedModuleContent.length > 0 ? selectedModuleContent.map((item, index) => (
                       <View key={index} style={{ marginBottom: 24 }}>
                         {item.type === 'image' ? (
@@ -1346,245 +1346,245 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
     const selectedCropNames = userProfile?.selected_crops || [];
 
     return (
-    <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <View style={styles.profileContainer}>
-        {/* Header */}
-        <View style={styles.profileMainHeader}>
-          <View style={styles.profileHeaderContent}>
-            <TouchableOpacity 
-              onPress={isEditing ? pickProfilePicture : undefined}
-              disabled={!isEditing}
-              style={[styles.profileHeaderIconCircle, isEditing && { backgroundColor: 'rgba(255, 255, 255, 0.4)' }]}
+      <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <View style={styles.profileContainer}>
+          {/* Header */}
+          <View style={styles.profileMainHeader}>
+            <View style={styles.profileHeaderContent}>
+              <TouchableOpacity
+                onPress={isEditing ? pickProfilePicture : undefined}
+                disabled={!isEditing}
+                style={[styles.profileHeaderIconCircle, isEditing && { backgroundColor: 'rgba(255, 255, 255, 0.4)' }]}
+              >
+                {(isEditing ? editProfilePicture : userProfile?.profile_picture_url) ? (
+                  <Image source={{ uri: isEditing ? editProfilePicture : userProfile.profile_picture_url }} style={{ width: 60, height: 60, borderRadius: 30 }} />
+                ) : (
+                  <Ionicons name="person" size={32} color="#FFFFFF" />
+                )}
+                {isEditing && (
+                  <View style={{ position: 'absolute', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 15, padding: 4 }}>
+                    <Ionicons name="camera" size={16} color="#FFFFFF" />
+                  </View>
+                )}
+              </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                {isEditing ? (
+                  <TextInput
+                    style={styles.profileHeaderNameInput}
+                    value={editFullName}
+                    onChangeText={setEditFullName}
+                    placeholder="Your Name"
+                    placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                  />
+                ) : (
+                  <Text style={styles.profileHeaderTitle}>{userProfile?.full_name || user?.user_metadata?.full_name || 'My Profile'}</Text>
+                )}
+                <Text style={styles.profileHeaderSubtitle}>{userProfile?.province ? `${userProfile.province}, Zambia` : 'Manage your farm information'}</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.profileHeaderEditButton}
+              onPress={isEditing ? handleSaveInlineProfile : () => {
+                setEditFullName(userProfile?.full_name || user?.user_metadata?.full_name || '');
+                setEditProfilePicture(userProfile?.profile_picture_url || null);
+                setEditFarmSize(userProfile?.farm_size || '');
+                setEditSoilType(userProfile?.soil_type || '');
+                setEditPrimaryCrops(userProfile?.primary_crops?.join(', ') || '');
+                setIsEditing(true);
+              }}
             >
-              {(isEditing ? editProfilePicture : userProfile?.profile_picture_url) ? (
-                <Image source={{ uri: isEditing ? editProfilePicture : userProfile.profile_picture_url }} style={{ width: 60, height: 60, borderRadius: 30 }} />
+              {isSavingProfile ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Ionicons name="person" size={32} color="#FFFFFF" />
-              )}
-              {isEditing && (
-                <View style={{ position: 'absolute', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 15, padding: 4 }}>
-                  <Ionicons name="camera" size={16} color="#FFFFFF" />
-                </View>
+                <Ionicons name={isEditing ? "checkmark" : "create-outline"} size={22} color="#FFFFFF" />
               )}
             </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              {isEditing ? (
-                <TextInput
-                  style={styles.profileHeaderNameInput}
-                  value={editFullName}
-                  onChangeText={setEditFullName}
-                  placeholder="Your Name"
-                  placeholderTextColor="rgba(255, 255, 255, 0.6)"
-                />
-              ) : (
-                <Text style={styles.profileHeaderTitle}>{userProfile?.full_name || user?.user_metadata?.full_name || 'My Profile'}</Text>
-              )}
-              <Text style={styles.profileHeaderSubtitle}>{userProfile?.province ? `${userProfile.province}, Zambia` : 'Manage your farm information'}</Text>
-            </View>
           </View>
-          <TouchableOpacity 
-            style={styles.profileHeaderEditButton}
-            onPress={isEditing ? handleSaveInlineProfile : () => {
-              setEditFullName(userProfile?.full_name || user?.user_metadata?.full_name || '');
-              setEditProfilePicture(userProfile?.profile_picture_url || null);
-              setEditFarmSize(userProfile?.farm_size || '');
-              setEditSoilType(userProfile?.soil_type || '');
-              setEditPrimaryCrops(userProfile?.primary_crops?.join(', ') || '');
-              setIsEditing(true);
-            }}
-          >
-            {isSavingProfile ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Ionicons name={isEditing ? "checkmark" : "create-outline"} size={22} color="#FFFFFF" />
-            )}
-          </TouchableOpacity>
-        </View>
 
-        <ScrollView style={styles.profileContentScroll} showsVerticalScrollIndicator={false}>
-          {isEditing && (
-            <View style={styles.profileEditNotice}>
-              <View style={styles.profileEditNoticeIcon}>
-                <Ionicons name="create-outline" size={16} color="#166534" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.profileEditNoticeTitle}>Edit Profile Mode</Text>
-                <Text style={styles.profileEditNoticeText}>Update your farm details and tap Save Changes when done.</Text>
-              </View>
-            </View>
-          )}
-
-          {/* Farm Details Card */}
-          <View style={[styles.profileSectionCard, isEditing && styles.profileEditCard]}>
-            <View style={styles.profileSectionHeader}>
-              <Text style={styles.profileSectionTitle}>Farm Details</Text>
-            </View>
-
-            {/* Farm Size */}
-            <View style={[styles.profileDetailItem, styles.profileDetailItemLast]}>
-              <View style={[styles.profileDetailIconCircle, { backgroundColor: '#DCFCE7' }]}>
-                <MaterialCommunityIcons name="leaf" size={20} color="#16a34a" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.profileDetailLabel}>Farm Size</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={styles.inlineInput}
-                    value={editFarmSize}
-                    onChangeText={setEditFarmSize}
-                    placeholder="e.g. 2 hectares"
-                  />
-                ) : (
-                  <Text style={styles.profileDetailValue}>{userProfile?.farm_size || 'Not specified'}</Text>
-                )}
-              </View>
-            </View>
-
-            {/* Soil Type */}
-            <View style={styles.profileDetailItem}>
-              <View style={[styles.profileDetailIconCircle, { backgroundColor: '#FEF3C7' }]}>
-                <MaterialCommunityIcons name="test-tube" size={20} color="#D97706" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.profileDetailLabel}>Soil Type</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={styles.inlineInput}
-                    value={editSoilType}
-                    onChangeText={setEditSoilType}
-                    placeholder="e.g. Clay, Sandy, Loam"
-                  />
-                ) : (
-                  <Text style={styles.profileDetailValue}>{userProfile?.soil_type || 'Not specified'}</Text>
-                )}
-              </View>
-            </View>
-
+          <ScrollView style={styles.profileContentScroll} showsVerticalScrollIndicator={false}>
             {isEditing && (
-              <View style={styles.profileEditActionsRow}>
-                <TouchableOpacity 
-                  style={styles.profileCancelButton}
-                  onPress={() => setIsEditing(false)}
-                >
-                  <Text style={styles.profileCancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.profileSaveButton}
-                  onPress={handleSaveInlineProfile}
-                  disabled={isSavingProfile}
-                >
-                  {isSavingProfile
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={styles.profileSaveButtonText}>Save Changes</Text>}
-                </TouchableOpacity>
+              <View style={styles.profileEditNotice}>
+                <View style={styles.profileEditNoticeIcon}>
+                  <Ionicons name="create-outline" size={16} color="#166534" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.profileEditNoticeTitle}>Edit Profile Mode</Text>
+                  <Text style={styles.profileEditNoticeText}>Update your farm details and tap Save Changes when done.</Text>
+                </View>
               </View>
             )}
-          </View>
 
-          {/* Current Location Card */}
-          <View style={styles.profileSectionCard}>
-            <View style={styles.profileSectionHeader}>
-              <Text style={styles.profileSectionTitle}>Current Location</Text>
-            </View>
-            <View style={styles.profileLocationCard}>
-              <View style={styles.profileLocationIconCircle}>
-                <Ionicons name="location" size={24} color="#16a34a" />
-              </View>
-              <View>
-                <Text style={styles.profileLocationLabel}>{selectedLocation || 'Not Selected'}</Text>
-                {selectedLocationData && (
-                  <Text style={styles.profileLocationValue}>{selectedLocationData.province}, Zambia</Text>
-                )}
-              </View>
-            </View>
-          </View>
-
-          {/* Saved Locations Card */}
-          {userFarms.length > 0 && (
-            <View style={styles.profileSectionCard}>
+            {/* Farm Details Card */}
+            <View style={[styles.profileSectionCard, isEditing && styles.profileEditCard]}>
               <View style={styles.profileSectionHeader}>
-                <Text style={styles.profileSectionTitle}>Saved Locations</Text>
+                <Text style={styles.profileSectionTitle}>Farm Details</Text>
               </View>
-              {userFarms.map((farm, index) => (
-                <View key={farm.id} style={[styles.savedLocationItem, index < userFarms.length - 1 && { marginBottom: 12 }, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                    <Ionicons name="location-outline" size={20} color="#999999" />
-                    <View style={{ marginLeft: 12 }}>
-                      <Text style={styles.profileLocationLabel}>{farm.name}</Text>
-                      <Text style={styles.profileLocationValue}>{farm.province}, Zambia</Text>
-                    </View>
-                  </View>
-                  <TouchableOpacity onPress={() => handleDeleteFarm(farm.id)} style={{ padding: 8 }}>
-                    <Ionicons name="trash-outline" size={20} color="#dc2626" />
+
+              {/* Farm Size */}
+              <View style={[styles.profileDetailItem, styles.profileDetailItemLast]}>
+                <View style={[styles.profileDetailIconCircle, { backgroundColor: '#DCFCE7' }]}>
+                  <MaterialCommunityIcons name="leaf" size={20} color="#16a34a" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.profileDetailLabel}>Farm Size</Text>
+                  {isEditing ? (
+                    <TextInput
+                      style={styles.inlineInput}
+                      value={editFarmSize}
+                      onChangeText={setEditFarmSize}
+                      placeholder="e.g. 2 hectares"
+                    />
+                  ) : (
+                    <Text style={styles.profileDetailValue}>{userProfile?.farm_size || 'Not specified'}</Text>
+                  )}
+                </View>
+              </View>
+
+              {/* Soil Type */}
+              <View style={styles.profileDetailItem}>
+                <View style={[styles.profileDetailIconCircle, { backgroundColor: '#FEF3C7' }]}>
+                  <MaterialCommunityIcons name="test-tube" size={20} color="#D97706" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.profileDetailLabel}>Soil Type</Text>
+                  {isEditing ? (
+                    <TextInput
+                      style={styles.inlineInput}
+                      value={editSoilType}
+                      onChangeText={setEditSoilType}
+                      placeholder="e.g. Clay, Sandy, Loam"
+                    />
+                  ) : (
+                    <Text style={styles.profileDetailValue}>{userProfile?.soil_type || 'Not specified'}</Text>
+                  )}
+                </View>
+              </View>
+
+              {isEditing && (
+                <View style={styles.profileEditActionsRow}>
+                  <TouchableOpacity
+                    style={styles.profileCancelButton}
+                    onPress={() => setIsEditing(false)}
+                  >
+                    <Text style={styles.profileCancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.profileSaveButton}
+                    onPress={handleSaveInlineProfile}
+                    disabled={isSavingProfile}
+                  >
+                    {isSavingProfile
+                      ? <ActivityIndicator color="#fff" />
+                      : <Text style={styles.profileSaveButtonText}>Save Changes</Text>}
                   </TouchableOpacity>
                 </View>
-              ))}
-            </View>
-          )}
-
-          {/* Selected Crops */}
-          <View style={styles.profileSectionCard}>
-            <View style={styles.profileSectionHeader}>
-              <Text style={styles.profileSectionTitle}>Selected Crops</Text>
-              <Text style={styles.selectedCropCountBadge}>{selectedCropNames.length}</Text>
+              )}
             </View>
 
-            {selectedCropNames.length > 0 ? (
-              <View style={styles.selectedCropsWrap}>
-                {selectedCropNames.map(cropName => (
-                  <TouchableOpacity
-                    key={cropName}
-                    style={styles.selectedCropChip}
-                    onPress={() => handleOpenSelectedCropModule(cropName)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.selectedCropChipIcon}>
-                      <Ionicons name="leaf-outline" size={14} color="#166534" />
+            {/* Current Location Card */}
+            <View style={styles.profileSectionCard}>
+              <View style={styles.profileSectionHeader}>
+                <Text style={styles.profileSectionTitle}>Current Location</Text>
+              </View>
+              <View style={styles.profileLocationCard}>
+                <View style={styles.profileLocationIconCircle}>
+                  <Ionicons name="location" size={24} color="#16a34a" />
+                </View>
+                <View>
+                  <Text style={styles.profileLocationLabel}>{selectedLocation || 'Not Selected'}</Text>
+                  {selectedLocationData && (
+                    <Text style={styles.profileLocationValue}>{selectedLocationData.province}, Zambia</Text>
+                  )}
+                </View>
+              </View>
+            </View>
+
+            {/* Saved Locations Card */}
+            {userFarms.length > 0 && (
+              <View style={styles.profileSectionCard}>
+                <View style={styles.profileSectionHeader}>
+                  <Text style={styles.profileSectionTitle}>Saved Locations</Text>
+                </View>
+                {userFarms.map((farm, index) => (
+                  <View key={farm.id} style={[styles.savedLocationItem, index < userFarms.length - 1 && { marginBottom: 12 }, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                      <Ionicons name="location-outline" size={20} color="#999999" />
+                      <View style={{ marginLeft: 12 }}>
+                        <Text style={styles.profileLocationLabel}>{farm.name}</Text>
+                        <Text style={styles.profileLocationValue}>{farm.province}, Zambia</Text>
+                      </View>
                     </View>
-                    <Text style={styles.selectedCropChipText}>{cropName}</Text>
-                    <Ionicons name="arrow-forward-circle-outline" size={16} color="#16a34a" />
-                  </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDeleteFarm(farm.id)} style={{ padding: 8 }}>
+                      <Ionicons name="trash-outline" size={20} color="#dc2626" />
+                    </TouchableOpacity>
+                  </View>
                 ))}
               </View>
-            ) : (
-              <View style={styles.selectedCropEmptyState}>
-                <Text style={styles.selectedCropEmptyText}>No selected crops yet. Tap below to choose crops and track them here.</Text>
-                <TouchableOpacity style={styles.selectedCropEmptyButton} onPress={handleNavigateToRecommendations}>
-                  <Text style={styles.selectedCropEmptyButtonText}>Choose Crops</Text>
-                </TouchableOpacity>
-              </View>
             )}
-          </View>
 
-          {/* Activity Card */}
-          <View style={styles.profileSectionCard}>
-            <View style={styles.profileSectionHeader}>
-              <Text style={styles.profileSectionTitle}>Activity</Text>
-            </View>
-            <View style={styles.profileStatsRow}>
-              <View style={styles.profileStatCard}>
-                <Text style={styles.profileStatNumber}>{userFarms.length}</Text>
-                <Text style={styles.profileStatLabel}>Saved Locations</Text>
+            {/* Selected Crops */}
+            <View style={styles.profileSectionCard}>
+              <View style={styles.profileSectionHeader}>
+                <Text style={styles.profileSectionTitle}>Selected Crops</Text>
+                <Text style={styles.selectedCropCountBadge}>{selectedCropNames.length}</Text>
               </View>
-              <View style={styles.profileStatCard}>
-                <Text style={styles.profileStatNumber}>
-                  {learningProgress.filter(p => p.completed).length}
-                </Text>
-                <Text style={styles.profileStatLabel}>Modules Completed</Text>
-              </View>
-            </View>
-          </View>
 
-          {/* Sign Out Button */}
-          <TouchableOpacity 
-            style={[styles.editButton, { backgroundColor: '#dc2626', borderColor: '#dc2626', marginBottom: 40 }]} 
-            onPress={onLogout}
-          >
-            <Text style={[styles.editButtonText, { color: '#ffffff' }]}>Sign Out</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-    </Animated.View>
+              {selectedCropNames.length > 0 ? (
+                <View style={styles.selectedCropsWrap}>
+                  {selectedCropNames.map(cropName => (
+                    <TouchableOpacity
+                      key={cropName}
+                      style={styles.selectedCropChip}
+                      onPress={() => handleOpenSelectedCropModule(cropName)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.selectedCropChipIcon}>
+                        <Ionicons name="leaf-outline" size={14} color="#166534" />
+                      </View>
+                      <Text style={styles.selectedCropChipText}>{cropName}</Text>
+                      <Ionicons name="arrow-forward-circle-outline" size={16} color="#16a34a" />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.selectedCropEmptyState}>
+                  <Text style={styles.selectedCropEmptyText}>No selected crops yet. Tap below to choose crops and track them here.</Text>
+                  <TouchableOpacity style={styles.selectedCropEmptyButton} onPress={handleNavigateToRecommendations}>
+                    <Text style={styles.selectedCropEmptyButtonText}>Choose Crops</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
+            {/* Activity Card */}
+            <View style={styles.profileSectionCard}>
+              <View style={styles.profileSectionHeader}>
+                <Text style={styles.profileSectionTitle}>Activity</Text>
+              </View>
+              <View style={styles.profileStatsRow}>
+                <View style={styles.profileStatCard}>
+                  <Text style={styles.profileStatNumber}>{userFarms.length}</Text>
+                  <Text style={styles.profileStatLabel}>Saved Locations</Text>
+                </View>
+                <View style={styles.profileStatCard}>
+                  <Text style={styles.profileStatNumber}>
+                    {learningProgress.filter(p => p.completed).length}
+                  </Text>
+                  <Text style={styles.profileStatLabel}>Modules Completed</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Sign Out Button */}
+            <TouchableOpacity
+              style={[styles.editButton, { backgroundColor: '#dc2626', borderColor: '#dc2626', marginBottom: 40 }]}
+              onPress={onLogout}
+            >
+              <Text style={[styles.editButtonText, { color: '#ffffff' }]}>Sign Out</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Animated.View>
     );
   };
 
@@ -1677,12 +1677,12 @@ export function CropIQAppDashboard({ user, userProfile: initialUserProfile, onLo
 
               {filteredLocations.length > 0
                 ? filteredLocations.map(loc => (
-                    <TouchableOpacity key={loc.id} style={styles.locationOption} onPress={() => fetchWeatherData(loc)}>
-                      <Text style={styles.locationName}>{loc.name}</Text>
-                      <Text style={styles.locationProvince}>{loc.district}</Text>
-                      <Text style={{ fontSize: 12, color: '#9ca3af' }}>{loc.province}</Text>
-                    </TouchableOpacity>
-                  ))
+                  <TouchableOpacity key={loc.id} style={styles.locationOption} onPress={() => fetchWeatherData(loc)}>
+                    <Text style={styles.locationName}>{loc.name}</Text>
+                    <Text style={styles.locationProvince}>{loc.district}</Text>
+                    <Text style={{ fontSize: 12, color: '#9ca3af' }}>{loc.province}</Text>
+                  </TouchableOpacity>
+                ))
                 : <View style={styles.noResultsContainer}><Text style={styles.noResultsText}>No locations found</Text><Text style={styles.noResultsSubtext}>Try a different search term</Text></View>}
             </ScrollView>
 

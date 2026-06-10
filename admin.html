@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,46 +10,451 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="icon" href="assets/logo.png" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script>
+        if (localStorage.getItem('admin-theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; overflow: hidden; }
-        #sidebar { width: 280px; min-width: 280px; background: #ffffff; border-right: 1px solid #f1f5f9; overflow-y: auto; }
-        .sidebar-brand-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #4ade80, #16a34a); border-radius: 14px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.25); }
-        .sidebar-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #94a3b8; padding: 0 1rem; margin-bottom: 0.5rem; }
-        .sidebar-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem; border-radius: 0.75rem; color: #94a3b8; text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: all 0.25s ease; }
-        .sidebar-link:hover { background-color: rgba(240, 253, 244, 0.9); color: #15803d; transform: translateX(4px); }
-        .sidebar-link.active { background-color: #16a34a; color: #fff; font-weight: 700; box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.35); transform: translateX(8px); }
-        .glass-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 1rem; transition: transform 0.25s ease, box-shadow 0.25s ease; }
-        .glass-card:hover { transform: translateY(-3px); box-shadow: 0 16px 30px -5px rgba(0, 0, 0, 0.05); }
-        .stat-icon { width: 3rem; height: 3rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
-        .status-pill { font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 20px; }
-        .status-pill.connecting { background-color: #fff7ed; color: #ea580c; }
-        .status-pill.live { background-color: #f0fdf4; color: #16a34a; }
-        .status-pill.offline { background-color: #fef2f2; color: #dc2626; }
-        #main-content { overflow-y: auto; flex: 1; }
-        .panel-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(6px); z-index: 1040; opacity: 0; transition: opacity 0.3s ease; }
-        .panel-backdrop.show { opacity: 1; }
-        .slide-panel { position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 500px; background-color: #f8fafc; z-index: 1050; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; box-shadow: -20px 0 50px -10px rgba(0,0,0,0.1); }
-        .slide-panel.show { transform: translateX(0); }
-        .panel-header { position: relative; height: 190px; background: linear-gradient(135deg, #16a34a, #15803d); padding: 1.5rem; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
-        .panel-header::before { content: ''; position: absolute; top: -80px; right: -80px; width: 250px; height: 250px; background: rgba(255,255,255,0.08); border-radius: 50%; filter: blur(40px); }
-        .panel-avatar { width: 72px; height: 72px; border-radius: 1.25rem; background: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.75rem; color: #16a34a; border: 3px solid rgba(255,255,255,0.3); }
-        .stat-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 1.25rem; padding: 1rem; }
-        .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
-        .crop-tag { display: inline-block; padding: 0.25rem 0.75rem; background-color: #f0fdf4; color: #15803d; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid #dcfce7; }
-        .farm-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 1.25rem; padding: 1rem; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: #ffffff;
+            border-right: 1px solid #f1f5f9;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #4ade80, #16a34a);
+            border-radius: 14px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.25);
+        }
+
+        .sidebar-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            padding: 0 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 1rem;
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(240, 253, 244, 0.9);
+            color: #15803d;
+            transform: translateX(4px);
+        }
+
+        .sidebar-link.active {
+            background-color: #16a34a;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.35);
+            transform: translateX(8px);
+        }
+
+        .glass-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1rem;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 30px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .status-pill {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 20px;
+        }
+
+        .status-pill.connecting {
+            background-color: #fff7ed;
+            color: #ea580c;
+        }
+
+        .status-pill.live {
+            background-color: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .status-pill.offline {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        #main-content {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .panel-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(6px);
+            z-index: 1040;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .panel-backdrop.show {
+            opacity: 1;
+        }
+
+        .slide-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 100%;
+            max-width: 500px;
+            background-color: #f8fafc;
+            z-index: 1050;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -20px 0 50px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        .slide-panel.show {
+            transform: translateX(0);
+        }
+
+        .panel-header {
+            position: relative;
+            height: 190px;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            overflow: hidden;
+        }
+
+        .panel-header::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 250px;
+            height: 250px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            filter: blur(40px);
+        }
+
+        .panel-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 1.25rem;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.75rem;
+            color: #16a34a;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .stat-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1.25rem;
+            padding: 1rem;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+        }
+
+        .crop-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: #f0fdf4;
+            color: #15803d;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid #dcfce7;
+        }
+
+        .farm-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1.25rem;
+            padding: 1rem;
+        }
+
+        /* ── Dark Mode Styles ── */
+        html.dark-mode body {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode #sidebar {
+            background: #1e293b !important;
+            border-right-color: #334155 !important;
+        }
+
+        html.dark-mode .sidebar-brand-icon {
+            box-shadow: 0 8px 20px -4px rgba(34, 197, 94, 0.15) !important;
+        }
+
+        html.dark-mode .sidebar-link {
+            color: #94a3b8 !important;
+        }
+
+        html.dark-mode .sidebar-link:hover {
+            background-color: rgba(34, 197, 94, 0.1) !important;
+            color: #4ade80 !important;
+        }
+
+        html.dark-mode .sidebar-link.active {
+            background-color: #16a34a !important;
+            color: #fff !important;
+        }
+
+        html.dark-mode header {
+            background-color: #1e293b !important;
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode header h2,
+        html.dark-mode header h5 {
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .glass-card,
+        html.dark-mode .settings-card,
+        html.dark-mode .stat-card,
+        html.dark-mode .farm-card,
+        html.dark-mode .bg-white.border,
+        html.dark-mode .crop-card {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .text-dark {
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .text-muted {
+            color: #94a3b8 !important;
+        }
+
+        html.dark-mode .form-control {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .form-control::placeholder {
+            color: #64748b !important;
+        }
+
+        html.dark-mode .form-control:focus {
+            border-color: #22c55e !important;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
+        }
+
+        html.dark-mode .form-select {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .table {
+            color: #f8fafc !important;
+        }
+
+        html.dark-mode .table th {
+            background-color: #1e293b !important;
+            color: #94a3b8 !important;
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode .table td {
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode .table tbody tr:hover {
+            background-color: rgba(34, 197, 94, 0.08) !important;
+        }
+
+        html.dark-mode .table-responsive,
+        html.dark-mode .border,
+        html.dark-mode .border-bottom,
+        html.dark-mode .border-top,
+        html.dark-mode .border-start,
+        html.dark-mode .border-end {
+            border-color: #334155 !important;
+        }
+
+        html.dark-mode .form-control[readonly] {
+            background-color: #0f172a !important;
+            color: #94a3b8 !important;
+        }
+
+        html.dark-mode .user-avatar {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+
+        html.dark-mode tr:hover .user-avatar {
+            background-color: rgba(34, 197, 94, 0.2) !important;
+            color: #4ade80 !important;
+        }
+
+        html.dark-mode .slide-panel {
+            background-color: #0f172a !important;
+            box-shadow: -20px 0 50px -10px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        html.dark-mode .modal-content {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+
+        html.dark-mode .modal-header {
+            border-bottom-color: #334155 !important;
+        }
+
+        html.dark-mode .modal-footer {
+            border-top-color: #334155 !important;
+        }
+
+        html.dark-mode .btn-close {
+            filter: invert(1) !important;
+        }
+
+        html.dark-mode .ai-banner {
+            background: linear-gradient(135deg, #064e3b, #022c22) !important;
+            border-color: #047857 !important;
+        }
+
+        html.dark-mode .text-success-emphasis {
+            color: #a7f3d0 !important;
+        }
+
+        html.dark-mode .text-success {
+            color: #4ade80 !important;
+        }
+
+        html.dark-mode .badge-ai {
+            background-color: #064e3b !important;
+            color: #6ee7b7 !important;
+        }
+
+        html.dark-mode .toggle-track {
+            background-color: #334155 !important;
+        }
+
+        html.dark-mode .toggle-track.active {
+            background-color: #22c55e !important;
+        }
+
+        html.dark-mode code.bg-light,
+        html.dark-mode .bg-light {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+
+        /* ── Mobile Sidebar Styles ── */
+        @media (max-width: 991.98px) {
+            #sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                bottom: 0;
+                z-index: 1045;
+                transition: left 0.3s ease;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+                display: flex !important;
+            }
+            #sidebar.show {
+                left: 0;
+            }
+        }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1040;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
     </style>
 </head>
+
 <body>
     <div class="d-flex" style="height: 100vh;">
         <!-- ── Sidebar ── -->
-        <aside id="sidebar" class="d-none d-lg-flex flex-column">
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <aside id="sidebar" class="flex-column">
             <div class="p-4 pb-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="sidebar-brand-icon">🌱</div>
                     <div>
                         <div class="fw-bold fs-6 text-dark lh-1">CropIQ</div>
-                        <div class="text-uppercase text-success opacity-75" style="font-size:10px; letter-spacing:0.18em; font-weight:700;">Intelligence</div>
+                        <div class="text-uppercase text-success opacity-75"
+                            style="font-size:10px; letter-spacing:0.18em; font-weight:700;">Intelligence</div>
                     </div>
                 </div>
             </div>
@@ -63,7 +469,8 @@
                     <p class="sidebar-section-label">Operations</p>
                     <nav class="d-flex flex-column gap-1">
                         <a href="users.html" class="sidebar-link"><i class="bi bi-people"></i> Farmers</a>
-                        <a href="articles.html" class="sidebar-link"><i class="bi bi-journal-richtext"></i> Knowledge</a>
+                        <a href="articles.html" class="sidebar-link"><i class="bi bi-journal-richtext"></i>
+                            Knowledge</a>
                         <a href="crops.html" class="sidebar-link"><i class="bi bi-flower1"></i> Crops</a>
                     </nav>
                 </div>
@@ -79,14 +486,21 @@
         <!-- ── Main ── -->
         <div class="d-flex flex-column flex-grow-1 min-w-0">
             <!-- Header -->
-            <header class="bg-white border-bottom d-flex align-items-center justify-content-between px-4" style="height:64px; border-color:#f1f5f9 !important; z-index:10;">
-                <div>
-                    <h2 class="mb-0 fw-bold fs-6 text-dark">Analytics Overview</h2>
-                    <p class="mb-0 text-muted" style="font-size:0.75rem;">Welcome back, Admin</p>
+            <header class="bg-white border-bottom d-flex align-items-center justify-content-between px-3 px-lg-4"
+                style="height:64px; z-index:10;">
+                <div class="d-flex align-items-center gap-2">
+                    <button id="mobile-menu-btn" class="btn d-lg-none p-1" style="color:inherit; border:none;">
+                        <i class="bi bi-list fs-3"></i>
+                    </button>
+                    <div>
+                        <h2 class="mb-0 fw-bold fs-6 text-dark">Analytics Overview</h2>
+                        <p class="mb-0 text-muted" style="font-size:0.75rem;">Welcome back, Admin</p>
+                    </div>
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <span id="connection-status" class="status-pill connecting">Connecting...</span>
-                    <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold" style="width:32px;height:32px;background:#dcfce7;color:#15803d;font-size:0.75rem;">AD</div>
+                    <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold"
+                        style="width:32px;height:32px;background:#dcfce7;color:#15803d;font-size:0.75rem;">AD</div>
                 </div>
             </header>
 
@@ -98,7 +512,8 @@
                         <div class="glass-card p-4">
                             <div class="d-flex align-items-center justify-content-between mb-3">
                                 <div class="stat-icon" style="background:#eff6ff;color:#3b82f6;">👥</div>
-                                <span class="badge" style="background:#f0fdf4;color:#16a34a;font-size:11px;font-weight:600;border-radius:6px;">+12%</span>
+                                <span class="badge"
+                                    style="background:#f0fdf4;color:#16a34a;font-size:11px;font-weight:600;border-radius:6px;">+12%</span>
                             </div>
                             <p class="text-muted mb-1" style="font-size:0.875rem;">Total Users</p>
                             <p id="total-users" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
@@ -108,7 +523,8 @@
                         <div class="glass-card p-4">
                             <div class="d-flex align-items-center justify-content-between mb-3">
                                 <div class="stat-icon" style="background:#f0fdf4;color:#16a34a;">🚜</div>
-                                <span class="badge" style="background:#f8fafc;color:#94a3b8;font-size:11px;font-weight:600;border-radius:6px;">Stable</span>
+                                <span class="badge"
+                                    style="background:#f8fafc;color:#94a3b8;font-size:11px;font-weight:600;border-radius:6px;">Stable</span>
                             </div>
                             <p class="text-muted mb-1" style="font-size:0.875rem;">Total Farms</p>
                             <p id="total-farms" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
@@ -118,7 +534,8 @@
                         <div class="glass-card p-4">
                             <div class="d-flex align-items-center justify-content-between mb-3">
                                 <div class="stat-icon" style="background:#faf5ff;color:#a855f7;">📖</div>
-                                <span class="badge" style="background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:600;border-radius:6px;">+8%</span>
+                                <span class="badge"
+                                    style="background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:600;border-radius:6px;">+8%</span>
                             </div>
                             <p class="text-muted mb-1" style="font-size:0.875rem;">Articles Read</p>
                             <p id="total-reads" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
@@ -128,7 +545,8 @@
                         <div class="glass-card p-4">
                             <div class="d-flex align-items-center justify-content-between mb-3">
                                 <div class="stat-icon" style="background:#fff7ed;color:#f97316;">🌱</div>
-                                <span class="badge" style="background:#fff7ed;color:#f97316;font-size:11px;font-weight:600;border-radius:6px;">Avg</span>
+                                <span class="badge"
+                                    style="background:#fff7ed;color:#f97316;font-size:11px;font-weight:600;border-radius:6px;">Avg</span>
                             </div>
                             <p class="text-muted mb-1" style="font-size:0.875rem;">Avg. Crops/User</p>
                             <p id="avg-crops" class="fw-bold text-dark mb-0" style="font-size:1.75rem;">0</p>
@@ -142,7 +560,8 @@
                         <div class="glass-card p-4">
                             <div class="d-flex align-items-center justify-content-between mb-3">
                                 <h6 class="fw-bold text-dark mb-0">Top Selected Crops</h6>
-                                <select class="form-select form-select-sm" style="width:auto;font-size:0.75rem;border-radius:0.5rem;border-color:#e2e8f0;">
+                                <select class="form-select form-select-sm"
+                                    style="width:auto;font-size:0.75rem;border-radius:0.5rem;">
                                     <option>Last 30 Days</option>
                                     <option>All Time</option>
                                 </select>
@@ -165,12 +584,13 @@
                         <div class="glass-card p-4">
                             <div class="d-flex align-items-center justify-content-between mb-3">
                                 <h6 class="fw-bold text-dark mb-0">Recent Onboarding</h6>
-                                <span class="text-muted text-uppercase" style="font-size:10px;font-weight:600;letter-spacing:0.06em;">Click to view</span>
+                                <span class="text-muted text-uppercase"
+                                    style="font-size:10px;font-weight:600;letter-spacing:0.06em;">Click to view</span>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-borderless mb-0" style="font-size:0.85rem;">
                                     <thead>
-                                        <tr class="text-muted" style="border-bottom:1px solid #f8fafc;">
+                                        <tr class="text-muted border-bottom">
                                             <th class="fw-medium pb-2">User</th>
                                             <th class="fw-medium pb-2">Province</th>
                                             <th class="fw-medium pb-2">Status</th>
@@ -184,19 +604,23 @@
                     </div>
                     <div class="col-lg-6">
                         <div class="glass-card p-4">
-                            <h6 class="fw-bold text-dark mb-3">Article Performance</h6>
+                            <h6 class="fw-bold text-dark mb-0">Article Performance</h6>
                             <div style="height:280px;"><canvas id="articlesChart"></canvas></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- RLS Warning -->
-                <div id="rls-warning" class="mt-4 p-3 rounded-3 d-none" style="background:#fffbeb; border:1px solid #fef3c7;">
+                <div id="rls-warning" class="mt-4 p-3 rounded-3 d-none"
+                    style="background:#fffbeb; border:1px solid #fef3c7;">
                     <div class="d-flex gap-3">
                         <span style="font-size:1.25rem;">💡</span>
                         <div>
-                            <p class="fw-bold mb-1" style="font-size:0.875rem; color:#92400e;">Action Required: Permissions</p>
-                            <p class="mb-0" style="font-size:0.8rem; color:#a16207;">If no data is appearing, apply the RLS policies from <code class="bg-white px-1 rounded">admin_setup_policies.sql</code> to your Supabase project.</p>
+                            <p class="fw-bold mb-1" style="font-size:0.875rem; color:#92400e;">Action Required:
+                                Permissions</p>
+                            <p class="mb-0" style="font-size:0.8rem; color:#a16207;">If no data is appearing, apply the
+                                RLS policies from <code class="bg-white px-1 rounded">admin_setup_policies.sql</code> to
+                                your Supabase project.</p>
                         </div>
                     </div>
                 </div>
@@ -209,10 +633,13 @@
     <div id="user-panel" class="slide-panel">
         <div class="panel-header">
             <div class="d-flex justify-content-between align-items-start position-relative mb-3" style="z-index:2;">
-                <button onclick="closeUserPanel()" class="btn btn-sm text-white" style="background:rgba(0,0,0,0.2); border-radius:0.75rem; padding:0.4rem 0.6rem;">
+                <button onclick="closeUserPanel()" class="btn btn-sm text-white"
+                    style="background:rgba(0,0,0,0.2); border-radius:0.75rem; padding:0.4rem 0.6rem;">
                     <i class="bi bi-x-lg"></i>
                 </button>
-                <span class="badge text-white" style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.2); font-size:10px; letter-spacing:0.12em; text-transform:uppercase; border-radius:20px; padding:4px 12px;">User Profile</span>
+                <span class="badge text-white"
+                    style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.2); font-size:10px; letter-spacing:0.12em; text-transform:uppercase; border-radius:20px; padding:4px 12px;">User
+                    Profile</span>
             </div>
             <div class="d-flex align-items-center gap-3 position-relative" style="z-index:2;">
                 <div class="panel-avatar" id="u-avatar">?</div>
@@ -224,25 +651,59 @@
         </div>
         <div class="flex-grow-1 overflow-auto p-4">
             <div class="row g-3 mb-4">
-                <div class="col-6"><div class="stat-card"><div class="d-flex align-items-center gap-2 mb-2"><span>🗺️</span><span class="stat-label">Province</span></div><p id="u-province" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p></div></div>
-                <div class="col-6"><div class="stat-card"><div class="d-flex align-items-center gap-2 mb-2"><span>📐</span><span class="stat-label">Farm Size</span></div><p id="u-farm-size" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p></div></div>
-                <div class="col-6"><div class="stat-card"><div class="d-flex align-items-center gap-2 mb-2"><span>⏳</span><span class="stat-label">Experience</span></div><p id="u-experience" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">0 Years</p></div></div>
-                <div class="col-6"><div class="stat-card"><div class="d-flex align-items-center gap-2 mb-2"><span>🧪</span><span class="stat-label">Soil Type</span></div><p id="u-soil" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p></div></div>
+                <div class="col-6">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center gap-2 mb-2"><span>🗺️</span><span
+                                class="stat-label">Province</span></div>
+                        <p id="u-province" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center gap-2 mb-2"><span>📐</span><span class="stat-label">Farm
+                                Size</span></div>
+                        <p id="u-farm-size" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center gap-2 mb-2"><span>⏳</span><span
+                                class="stat-label">Experience</span></div>
+                        <p id="u-experience" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">0 Years</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center gap-2 mb-2"><span>🧪</span><span class="stat-label">Soil
+                                Type</span></div>
+                        <p id="u-soil" class="fw-bold text-dark mb-0" style="font-size:0.875rem;">Not set</p>
+                    </div>
+                </div>
             </div>
             <div class="mb-4">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2"><span class="d-flex align-items-center justify-content-center rounded-3" style="width:32px;height:32px;background:#dcfce7;color:#16a34a;font-size:0.875rem;">🌿</span>Interests</h6>
-                    <span id="u-crops-count" class="badge bg-light text-secondary" style="font-size:10px;font-weight:700;">0 Crops</span>
+                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2"><span
+                            class="d-flex align-items-center justify-content-center rounded-3"
+                            style="width:32px;height:32px;background:#dcfce7;color:#16a34a;font-size:0.875rem;">🌿</span>Interests
+                    </h6>
+                    <span id="u-crops-count" class="badge bg-light text-secondary"
+                        style="font-size:10px;font-weight:700;">0 Crops</span>
                 </div>
                 <div id="u-crops" class="d-flex flex-wrap gap-2"></div>
             </div>
             <div class="mb-4">
-                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"><span class="d-flex align-items-center justify-content-center rounded-3" style="width:32px;height:32px;background:#dbeafe;color:#2563eb;font-size:0.875rem;">📍</span>Registered Farms</h6>
+                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"><span
+                        class="d-flex align-items-center justify-content-center rounded-3"
+                        style="width:32px;height:32px;background:#dbeafe;color:#2563eb;font-size:0.875rem;">📍</span>Registered
+                    Farms</h6>
                 <div id="u-farms-list" class="d-flex flex-column gap-2"></div>
             </div>
             <div>
-                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"><span class="d-flex align-items-center justify-content-center rounded-3" style="width:32px;height:32px;background:#ffedd5;color:#ea580c;font-size:0.875rem;">✨</span>Recent Activity</h6>
-                <div id="u-recs-list" class="bg-white border rounded-4 overflow-hidden" style="border-color:#f1f5f9 !important;"></div>
+                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2"><span
+                        class="d-flex align-items-center justify-content-center rounded-3"
+                        style="width:32px;height:32px;background:#ffedd5;color:#ea580c;font-size:0.875rem;">✨</span>Recent
+                    Activity</h6>
+                <div id="u-recs-list" class="bg-white border rounded-4 overflow-hidden"></div>
             </div>
         </div>
     </div>
@@ -256,7 +717,7 @@
 
         async function fetchAnalytics() {
             const statusEl = document.getElementById('connection-status');
-            
+
             try {
                 const { data: users, error: userError } = await supabaseClient
                     .from('user_profiles')
@@ -312,7 +773,7 @@
                 <tr style="cursor:pointer;" onclick="openUserPanel('${u.id}')">
                     <td class="py-2">
                         <div class="d-flex align-items-center gap-2">
-                            <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold" style="width:32px;height:32px;background:#f1f5f9;color:#94a3b8;font-size:0.75rem;">${u.full_name.charAt(0)}</div>
+                            <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold user-avatar" style="width:32px;height:32px;font-size:0.75rem;">${u.full_name.charAt(0)}</div>
                             <span class="fw-semibold text-dark">${u.full_name}</span>
                         </div>
                     </td>
@@ -330,7 +791,7 @@
         async function openUserPanel(userId) {
             const panel = document.getElementById('user-panel');
             const backdrop = document.getElementById('user-panel-backdrop');
-            
+
             // Show panel loading state
             backdrop.classList.remove('d-none');
             setTimeout(() => { backdrop.classList.add('show'); panel.classList.add('show'); }, 10);
@@ -376,7 +837,7 @@
 
                 // Recommendations
                 const recHtml = recs.map(r => `
-                    <div class="d-flex align-items-center justify-content-between p-3 border-bottom" style="border-color:#f8fafc !important;">
+                    <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
                         <div>
                             <p class="fw-bold text-dark mb-0" style="font-size:0.875rem;">${r.crop_name}</p>
                             <p class="text-muted mb-0" style="font-size:10px;">${new Date(r.created_at).toLocaleDateString()}</p>
@@ -405,8 +866,9 @@
 
         function renderCropsChart(counts) {
             const ctx = document.getElementById('cropsChart').getContext('2d');
-            const sortedLabels = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 6);
-            
+            const sortedLabels = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 6);
+            const isDark = document.documentElement.classList.contains('dark-mode');
+
             new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -425,8 +887,16 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { border: { display: false }, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1, color: '#94a3b8' } },
-                        x: { border: { display: false }, grid: { display: false }, ticks: { color: '#64748b', font: { weight: '600' } } }
+                        y: {
+                            border: { display: false },
+                            grid: { color: isDark ? '#334155' : '#f1f5f9' },
+                            ticks: { stepSize: 1, color: isDark ? '#94a3b8' : '#94a3b8' }
+                        },
+                        x: {
+                            border: { display: false },
+                            grid: { display: false },
+                            ticks: { color: isDark ? '#cbd5e1' : '#64748b', font: { weight: '600' } }
+                        }
                     }
                 }
             });
@@ -436,7 +906,10 @@
             const ctx = document.getElementById('locationChart').getContext('2d');
             const data = Object.values(counts);
             const labels = Object.keys(counts);
-            const colors = ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'];
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const colors = isDark
+                ? ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0']
+                : ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'];
 
             new Chart(ctx, {
                 type: 'doughnut',
@@ -475,6 +948,7 @@
                 const title = p.educational_modules?.title || 'Unknown';
                 articleCounts[title] = (articleCounts[title] || 0) + 1;
             });
+            const isDark = document.documentElement.classList.contains('dark-mode');
 
             new Chart(ctx, {
                 type: 'line',
@@ -486,17 +960,17 @@
                         borderColor: '#16a34a',
                         backgroundColor: (context) => {
                             const chart = context.chart;
-                            const {ctx, chartArea} = chart;
+                            const { ctx, chartArea } = chart;
                             if (!chartArea) return null;
                             const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
                             gradient.addColorStop(0, 'rgba(22, 163, 74, 0)');
-                            gradient.addColorStop(1, 'rgba(22, 163, 74, 0.1)');
+                            gradient.addColorStop(1, isDark ? 'rgba(22, 163, 74, 0.2)' : 'rgba(22, 163, 74, 0.1)');
                             return gradient;
                         },
                         fill: true,
                         tension: 0.4,
                         pointRadius: 4,
-                        pointBackgroundColor: '#fff',
+                        pointBackgroundColor: isDark ? '#1e293b' : '#fff',
                         pointBorderWidth: 2
                     }]
                 },
@@ -505,8 +979,16 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { border: { display: false }, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8' } },
-                        x: { border: { display: false }, grid: { display: false }, ticks: { color: '#94a3b8' } }
+                        y: {
+                            border: { display: false },
+                            grid: { color: isDark ? '#334155' : '#f1f5f9' },
+                            ticks: { color: isDark ? '#94a3b8' : '#94a3b8' }
+                        },
+                        x: {
+                            border: { display: false },
+                            grid: { display: false },
+                            ticks: { color: isDark ? '#94a3b8' : '#94a3b8' }
+                        }
                     }
                 }
             });
@@ -642,5 +1124,26 @@
 
     <!-- Bootstrap 5 JS bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Mobile Menu Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            if (mobileMenuBtn && sidebar && sidebarOverlay) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.add('show');
+                    sidebarOverlay.classList.add('show');
+                });
+                
+                sidebarOverlay.addEventListener('click', () => {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            }
+        });
+    </script>
 </body>
+
 </html>
